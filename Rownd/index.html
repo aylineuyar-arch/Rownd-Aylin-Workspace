@@ -98,18 +98,15 @@
           <span id="model-badge" class="font-mono text-[10.5px] px-2 py-0.5 rounded-full bg-[#3D4A73] text-white">Claude Fable</span>
         </div>
 
-        <div class="relative">
-          <button type="button" disabled title="Comments / recommendations box — tentative, to be confirmed" class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white border-2 border-dashed border-slate-400 text-slate-500 font-bold text-sm flex items-center justify-center cursor-help">+</button>
-          <div id="draft-body" class="text-slate-700 leading-7">
-            <p id="draft-fable">Our approach decomposes the targeting stack into three independently testable modules — sensor fusion, engagement scoring, and weaponeering handoff — each exposed through a documented, government-owned interface. <mark class="bg-[#8A6A1E]/25 text-slate-900 font-medium px-1 rounded shadow-[inset_0_-2px_0_0_#8A6A1E]">This modular, open-systems architecture<span class="font-mono text-[9.5px] text-[#8A6A1E] font-bold align-super ml-0.5">used in 4 wins</span></mark> shortens the integration timeline for downstream primes and satisfies WOSA compliance without a full stack rewrite. Phase I validates the sensor fusion module against a recorded target set; Phase II demonstrates the full stack in a representative embedded environment with a live over-the-air weapons interface.</p>
-            <p id="draft-gemini" hidden>We propose a three-module targeting stack — sensor fusion, engagement scoring, and weaponeering handoff — connected through open, government-owned interfaces. Phase I proves out sensor fusion against a recorded target set; Phase II fields the complete stack in an embedded, WOSA-compliant environment with a live weapons interface.</p>
-          </div>
-          <p class="text-[10.5px] text-slate-500 italic mt-2">+ comments / recommendations box — tentative, to be confirmed</p>
+        <div id="draft-body" class="text-slate-700 leading-7">
+          <p id="draft-fable">Our approach decomposes the targeting stack into three independently testable modules — sensor fusion, engagement scoring, and weaponeering handoff — each exposed through a documented, government-owned interface. <mark class="bg-[#8A6A1E]/25 text-slate-900 font-medium px-1 rounded shadow-[inset_0_-2px_0_0_#8A6A1E]">This modular, open-systems architecture<span class="font-mono text-[9.5px] text-[#8A6A1E] font-bold align-super ml-0.5">used in 4 wins</span></mark> shortens the integration timeline for downstream primes and satisfies WOSA compliance without a full stack rewrite. Phase I validates the sensor fusion module against a recorded target set; Phase II demonstrates the full stack in a representative embedded environment with a live over-the-air weapons interface.</p>
+          <p id="draft-gemini" hidden>We propose a three-module targeting stack — sensor fusion, engagement scoring, and weaponeering handoff — connected through open, government-owned interfaces. Phase I proves out sensor fusion against a recorded target set; Phase II fields the complete stack in an embedded, WOSA-compliant environment with a live weapons interface.</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5 mt-3.5 pt-3.5 border-t-2 border-slate-300">
           <button type="button" id="regen-btn" class="bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors">Regenerate</button>
           <button type="button" id="improve-btn" disabled class="bg-white border-2 border-slate-400 text-slate-800 text-xs font-semibold px-3.5 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">Improve selection</button>
+          <button type="button" disabled class="bg-white border-2 border-dashed border-slate-400 text-slate-500 text-xs font-semibold px-3.5 py-2 rounded-lg cursor-not-allowed">+ Comments <span class="font-normal text-slate-400">(tentative)</span></button>
           <div class="relative ml-auto">
             <button type="button" id="export-btn" class="bg-[#3D4A73] hover:bg-[#2E3A5F] text-white font-semibold text-xs px-3.5 py-2 rounded-lg transition-colors">Export as ▾</button>
             <div id="export-menu" hidden class="absolute right-0 top-[calc(100%+6px)] bg-white border-2 border-slate-300 rounded-lg shadow-lg p-1.5 min-w-[170px] z-10">
