@@ -307,13 +307,16 @@
 
       <div class="bg-white border-2 border-slate-300 rounded-xl p-5">
         <figure>
-          <svg viewBox="0 0 1180 480" role="img" aria-label="Flow diagram: a toggled topic source and a template library feed a generation engine drawing on Claude Fable and Gemini; trend analysis mines a memory store of past drafts and injects proven wording back into generation; drafts move through review and export; the outcome of each submission loops back into the memory store." class="w-full h-auto">
+          <svg viewBox="0 0 1180 500" role="img" aria-label="Flow diagram: a toggled topic source and a template library feed a generation engine drawing on Claude Fable and Gemini; trend analysis mines a memory store of past drafts and injects proven wording back into generation; drafts move through review and export; the outcome of each submission loops back into the memory store. A dashed, unbuilt tentative addition, a Topic Poller, sits off to the side, proposed to feed newly-live topics into the topic source." class="w-full h-auto">
             <defs>
               <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                 <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
               </marker>
               <marker id="arrowGold" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                 <path d="M0,0 L10,5 L0,10 z" fill="#8A6A1E"/>
+              </marker>
+              <marker id="arrowMuted" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
               </marker>
             </defs>
 
@@ -329,6 +332,7 @@
             <path d="M 110 138 C 110 165, 165 178, 278 187" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
             <path d="M 110 340 C 110 270, 170 246, 288 234" fill="none" stroke="#8A6A1E" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrowGold)"/>
             <path d="M 1080 230 C 1080 310, 1000 400, 600 378" fill="none" stroke="#8A6A1E" stroke-width="3" stroke-dasharray="7 5" marker-end="url(#arrowGold)"/>
+            <path d="M 792 400 C 550 470, 80 470, 62 140" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrowMuted)"/>
 
             <g font-family="ui-sans-serif, sans-serif" font-size="13" text-anchor="middle">
               <rect x="290" y="30" width="120" height="44" rx="10" fill="#3D4A73" stroke="#3D4A73" stroke-width="2"/>
@@ -369,17 +373,25 @@
               <rect x="288" y="340" width="320" height="60" rx="10" fill="#fff" stroke="#8A6A1E" stroke-width="2.5"/>
               <text x="448" y="366" fill="#8A6A1E" font-weight="700">Memory Store</text>
               <text x="448" y="384" fill="#475569" font-size="10.5">past drafts · wording · outcomes</text>
+
+              <rect x="790" y="330" width="260" height="86" rx="10" fill="#F8FAFC" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 4"/>
+              <text x="920" y="354" fill="#475569" font-weight="700" font-size="13">Topic Poller</text>
+              <text x="920" y="372" fill="#64748b" font-size="10">hourly cron · diffs vs. Memory Store</text>
+              <text x="920" y="388" fill="#64748b" font-size="10">flags newly-live topics</text>
+              <rect x="1000" y="332" width="42" height="16" rx="8" fill="#fff" stroke="#94a3b8" stroke-width="1.2"/>
+              <text x="1021" y="343" fill="#64748b" font-size="7" font-weight="700">TENTATIVE</text>
             </g>
 
             <g font-family="ui-monospace, monospace" font-size="10.5">
               <text x="150" y="315" fill="#8A6A1E" font-weight="600">proven wording</text>
               <text x="112" y="165" fill="#475569">if enabled</text>
               <text x="850" y="300" fill="#8A6A1E" font-weight="600">won / lost / no reply</text>
+              <text x="270" y="465" fill="#94a3b8" font-style="italic">if adopted</text>
             </g>
           </svg>
         </figure>
         <figcaption class="text-[12.5px] text-slate-600 mt-3.5 leading-relaxed">
-          Every draft is generated once but scored twice — after an RFI is won or lost, that outcome is tagged and folded back into the <b class="text-slate-900">Memory Store</b>, so the next <b class="text-slate-900">Trend Analysis</b> pass has one more data point on what actually worked. The toggle on <b class="text-slate-900">Topic Source</b> swaps a pasted RFI for a live pull from the DoD SBIR/STTR feed — same downstream path either way.
+          Every draft is generated once but scored twice — after an RFI is won or lost, that outcome is tagged and folded back into the <b class="text-slate-900">Memory Store</b>, so the next <b class="text-slate-900">Trend Analysis</b> pass has one more data point on what actually worked. The toggle on <b class="text-slate-900">Topic Source</b> swaps a pasted RFI for a live pull from the DoD SBIR/STTR feed — same downstream path either way. The dashed <b class="text-slate-700">Topic Poller</b> box is not built — it's a tentative addition that would poll the SBIR/STTR feed on a schedule and flag newly-live topics automatically, instead of Topic Source only checking when you open New RFIs.
         </figcaption>
       </div>
     </section>
