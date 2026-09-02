@@ -390,9 +390,38 @@
             </g>
           </svg>
         </figure>
-        <figcaption class="text-[12.5px] text-slate-600 mt-3.5 leading-relaxed">
-          Every draft is generated once but scored twice — after an RFI is won or lost, that outcome is tagged and folded back into the <b class="text-slate-900">Memory Store</b>, so the next <b class="text-slate-900">Trend Analysis</b> pass has one more data point on what actually worked. The toggle on <b class="text-slate-900">Topic Source</b> swaps a pasted RFI for a live pull from the DoD SBIR/STTR feed — same downstream path either way. The dashed <b class="text-slate-700">Topic Poller</b> box is not built — it's a tentative addition that would poll the SBIR/STTR feed on a schedule and flag newly-live topics automatically, instead of Topic Source only checking when you open New RFIs.
-        </figcaption>
+        <figcaption class="sr-only">See the numbered steps below for how data flows through this diagram.</figcaption>
+
+        <ol class="mt-5 pt-4 border-t-2 border-slate-200 grid gap-3">
+          <li class="flex gap-3 items-start">
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#2E615F] text-white font-bold text-[13px] flex items-center justify-center">1</span>
+            <p class="text-[13px] text-slate-700 pt-0.5"><b class="text-slate-900">Pick a topic.</b> Paste an RFI manually, or pull one live from the DoD SBIR/STTR feed.</p>
+          </li>
+          <li class="flex gap-3 items-start">
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#3D4A73] text-white font-bold text-[13px] flex items-center justify-center">2</span>
+            <p class="text-[13px] text-slate-700 pt-0.5"><b class="text-slate-900">Generate a draft.</b> The Generation Engine assembles a prompt from the topic, the Template Library, and any proven wording Trend Analysis has surfaced, then calls Claude Fable and/or Gemini.</p>
+          </li>
+          <li class="flex gap-3 items-start">
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-slate-500 text-white font-bold text-[13px] flex items-center justify-center">3</span>
+            <p class="text-[13px] text-slate-700 pt-0.5"><b class="text-slate-900">Review &amp; edit.</b> Compare drafts from each model, edit sections, regenerate as needed.</p>
+          </li>
+          <li class="flex gap-3 items-start">
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#3D4A73] text-white font-bold text-[13px] flex items-center justify-center">4</span>
+            <p class="text-[13px] text-slate-700 pt-0.5"><b class="text-slate-900">Export.</b> Download the finished draft as a Word doc or Google Doc.</p>
+          </li>
+          <li class="flex gap-3 items-start">
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#3F6647] text-white font-bold text-[13px] flex items-center justify-center">5</span>
+            <p class="text-[13px] text-slate-700 pt-0.5"><b class="text-slate-900">Tag the outcome.</b> Once you hear back, mark the submission won, lost, or no reply in Historic Submissions.</p>
+          </li>
+          <li class="flex gap-3 items-start">
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#8A6A1E] text-white font-bold text-[13px] flex items-center justify-center">6</span>
+            <p class="text-[13px] text-slate-700 pt-0.5"><b class="text-slate-900">Learn from it.</b> That outcome lands in the Memory Store, and Trend Analysis mines it for wording that correlates with wins — it'll show up highlighted in your next draft.</p>
+          </li>
+          <li class="flex gap-3 items-start opacity-70">
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-white text-slate-500 font-bold text-[13px] flex items-center justify-center border-2 border-dashed border-slate-400">+</span>
+            <p class="text-[13px] text-slate-600 pt-0.5 italic"><b class="text-slate-700 not-italic">Tentative:</b> a Topic Poller could run step 1 automatically, on a schedule, instead of waiting for you to check.</p>
+          </li>
+        </ol>
       </div>
     </section>
   </div>
