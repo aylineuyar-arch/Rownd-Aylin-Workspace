@@ -98,9 +98,13 @@
           <span id="model-badge" class="font-mono text-[10.5px] px-2 py-0.5 rounded-full bg-[#3D4A73] text-white">Claude Fable</span>
         </div>
 
-        <div id="draft-body" class="text-slate-700 leading-7">
-          <p id="draft-fable">Our approach decomposes the targeting stack into three independently testable modules — sensor fusion, engagement scoring, and weaponeering handoff — each exposed through a documented, government-owned interface. <mark class="bg-[#8A6A1E]/25 text-slate-900 font-medium px-1 rounded shadow-[inset_0_-2px_0_0_#8A6A1E]">This modular, open-systems architecture<span class="font-mono text-[9.5px] text-[#8A6A1E] font-bold align-super ml-0.5">used in 4 wins</span></mark> shortens the integration timeline for downstream primes and satisfies WOSA compliance without a full stack rewrite. Phase I validates the sensor fusion module against a recorded target set; Phase II demonstrates the full stack in a representative embedded environment with a live over-the-air weapons interface.</p>
-          <p id="draft-gemini" hidden>We propose a three-module targeting stack — sensor fusion, engagement scoring, and weaponeering handoff — connected through open, government-owned interfaces. Phase I proves out sensor fusion against a recorded target set; Phase II fields the complete stack in an embedded, WOSA-compliant environment with a live weapons interface.</p>
+        <div class="relative">
+          <button type="button" disabled title="Comments / recommendations box — tentative, to be confirmed" class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white border-2 border-dashed border-slate-400 text-slate-500 font-bold text-sm flex items-center justify-center cursor-help">+</button>
+          <div id="draft-body" class="text-slate-700 leading-7">
+            <p id="draft-fable">Our approach decomposes the targeting stack into three independently testable modules — sensor fusion, engagement scoring, and weaponeering handoff — each exposed through a documented, government-owned interface. <mark class="bg-[#8A6A1E]/25 text-slate-900 font-medium px-1 rounded shadow-[inset_0_-2px_0_0_#8A6A1E]">This modular, open-systems architecture<span class="font-mono text-[9.5px] text-[#8A6A1E] font-bold align-super ml-0.5">used in 4 wins</span></mark> shortens the integration timeline for downstream primes and satisfies WOSA compliance without a full stack rewrite. Phase I validates the sensor fusion module against a recorded target set; Phase II demonstrates the full stack in a representative embedded environment with a live over-the-air weapons interface.</p>
+            <p id="draft-gemini" hidden>We propose a three-module targeting stack — sensor fusion, engagement scoring, and weaponeering handoff — connected through open, government-owned interfaces. Phase I proves out sensor fusion against a recorded target set; Phase II fields the complete stack in an embedded, WOSA-compliant environment with a live weapons interface.</p>
+          </div>
+          <p class="text-[10.5px] text-slate-500 italic mt-2">+ comments / recommendations box — tentative, to be confirmed</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5 mt-3.5 pt-3.5 border-t-2 border-slate-300">
@@ -410,11 +414,7 @@
 
               <circle cx="782" cy="322" r="14" fill="#fff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="3 2"/>
               <text x="782" y="327" fill="#64748b">+</text>
-
-              <circle cx="740" cy="178" r="11" fill="#fff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="3 2"/>
-              <text x="740" y="182" fill="#64748b" font-size="11">+</text>
             </g>
-            <text x="695" y="245" font-family="ui-monospace, monospace" font-size="10" font-style="italic" fill="#94a3b8" text-anchor="middle">comments box — tentative, tbd</text>
           </svg>
         </figure>
         <figcaption class="sr-only">See the numbered steps below for how data flows through this diagram.</figcaption>
