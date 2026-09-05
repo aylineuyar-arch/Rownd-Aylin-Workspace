@@ -43,6 +43,10 @@
         data-active="bg-[#2E615F] text-white border-[#2E615F]"
         data-inactive="bg-[#2E615F]/10 text-[#2E615F] border-transparent hover:bg-[#2E615F]/20"
         class="bg-[#2E615F]/10 text-[#2E615F] border-transparent border-2 rounded-full px-4 py-1.5 font-semibold text-xs transition-colors">New RFIs</button>
+      <button type="button" data-section="reference"
+        data-active="bg-[#7A5C3E] text-white border-[#7A5C3E]"
+        data-inactive="bg-[#7A5C3E]/10 text-[#7A5C3E] border-transparent hover:bg-[#7A5C3E]/20"
+        class="bg-[#7A5C3E]/10 text-[#7A5C3E] border-transparent border-2 rounded-full px-4 py-1.5 font-semibold text-xs transition-colors">Reference Documents</button>
       <button type="button" data-section="architecture"
         data-active="bg-[#6B3F73] text-white border-[#6B3F73]"
         data-inactive="bg-[#6B3F73]/10 text-[#6B3F73] border-transparent hover:bg-[#6B3F73]/20"
@@ -51,7 +55,7 @@
   </header>
 
   <div class="px-6 py-6">
-  <div class="max-w-5xl mx-auto" id="narrow-sections">
+  <div class="w-[95%] max-w-[1600px] mx-auto" id="narrow-sections">
 
     <!-- ========== NEW DRAFT ========== -->
     <section id="section-new-draft">
@@ -305,9 +309,51 @@
       </div>
     </section>
 
+    <!-- ========== REFERENCE DOCUMENTS ========== -->
+    <section id="section-reference" hidden>
+      <h1 class="font-display font-semibold text-2xl text-[#7A5C3E] mb-4">Reference Documents</h1>
+      <p class="text-[12.5px] text-slate-600 mb-3.5">General-purpose reference material — capability statements, boilerplate paragraphs, diagrams — kept separate from Historic Submissions, which tracks actual submitted proposals and their outcomes.</p>
+
+      <div class="upload-zone border-2 border-dashed border-[#7A5C3E]/40 hover:border-[#7A5C3E]/60 rounded-xl bg-[#7A5C3E]/[0.05] px-4 py-3 mb-4 cursor-pointer transition-colors" data-upload="ref">
+        <input type="file" id="file-ref" multiple hidden>
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="text-[#7A5C3E]">⇧</span>
+          <span class="text-xs"><strong class="font-semibold text-slate-800">Add a reference document</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#7A5C3E] font-bold underline decoration-2 underline-offset-2">browse</button></span>
+          <span class="text-[11px] text-slate-600 ml-auto">capability statements, past-performance write-ups, diagrams</span>
+        </div>
+        <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-ref"></ul>
+      </div>
+
+      <div class="bg-white border-2 border-slate-300 rounded-xl p-4">
+        <div class="flex flex-col">
+          <div class="flex items-center gap-3.5 py-3 border-b-2 border-slate-300">
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-[13px] text-slate-900">Company Capability Statement</div>
+              <div class="text-[11.5px] text-slate-600 mt-0.5">PDF · updated 2026-08-02</div>
+            </div>
+            <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#7A5C3E] text-white">General</span>
+          </div>
+          <div class="flex items-center gap-3.5 py-3 border-b-2 border-slate-300">
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-[13px] text-slate-900">Embedded Systems Architecture Diagram</div>
+              <div class="text-[11.5px] text-slate-600 mt-0.5">PNG · updated 2026-07-18</div>
+            </div>
+            <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#3D4A73] text-white">Technical</span>
+          </div>
+          <div class="flex items-center gap-3.5 py-3">
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-[13px] text-slate-900">Past Performance Boilerplate — WOSA Programs</div>
+              <div class="text-[11.5px] text-slate-600 mt-0.5">DOCX · updated 2026-06-25</div>
+            </div>
+            <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#2E615F] text-white">Past Performance</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </div>
 
-  <div class="max-w-6xl mx-auto" id="wide-sections">
+  <div class="w-[95%] max-w-[1800px] mx-auto" id="wide-sections">
     <!-- ========== ARCHITECTURE ========== -->
     <section id="section-architecture" hidden>
       <h1 class="font-display font-semibold text-2xl text-[#6B3F73] mb-4">Architecture</h1>
