@@ -700,6 +700,11 @@
 
 <script>
 (function(){
+  // Tracks whether the user has explicitly picked a topic (from the New RFIs
+  // queue, manual entry, or Resume). Until they have, the top-of-page topic
+  // card is free to auto-update from whatever gets uploaded/pasted.
+  var topicManuallySet = false;
+
   // section switching (nav + "jump" buttons elsewhere on the page)
   function showSection(name){
     document.querySelectorAll('nav button[data-section]').forEach(function(b){
@@ -743,6 +748,7 @@
       item.classList.remove('border-slate-300', 'bg-white');
       item.classList.add('border-[#2E615F]', 'bg-[#2E615F]/[0.1]');
       if (e.target.classList.contains('use-topic-btn')) {
+        topicManuallySet = true;
         document.getElementById('topic-title-el').textContent = item.dataset.topic;
         document.getElementById('topic-code-el').textContent = item.dataset.code + ' · 26.BZ · USAF/AFMC';
         document.getElementById('draft-panel').hidden = true; showSection('new-draft');
@@ -760,6 +766,7 @@
   manualTitle.addEventListener('input', updateManualBtn);
   manualCode.addEventListener('input', updateManualBtn);
   manualUseBtn.addEventListener('click', function(){
+    topicManuallySet = true;
     document.getElementById('topic-title-el').textContent = manualTitle.value.trim();
     document.getElementById('topic-code-el').textContent = manualCode.value.trim();
     document.getElementById('draft-panel').hidden = true; showSection('new-draft');
@@ -939,6 +946,28 @@
     return 'bg-slate-100 text-slate-600';
   }
 
+  // Fallback for when the "CODE: STATUS - Title" header line doesn't parse
+  // (different formatting, status stated in prose instead) — a topic that
+  // hasn't opened yet is important enough not to lose just because the
+  // header regex missed it, so scan the full text for the same three
+  // known statuses before giving up.
+  function detectReleaseStatus(text, headerStatus){
+    if (headerStatus) return headerStatus;
+    if (/\bpre[-\s]?release\b/i.test(text)) return 'PRE-RELEASE';
+    if (/\bclosed\b/i.test(text)) return 'CLOSED';
+    if (/\bopen\b/i.test(text)) return 'OPEN';
+    return null;
+  }
+
+  // Keeps the top-of-page topic card in sync with whatever's actually been
+  // uploaded/pasted for this draft — but never overwrites a topic the user
+  // deliberately picked from New RFIs, entered manually, or resumed.
+  function updateTopicFromExtraction(code, title){
+    if (topicManuallySet) return;
+    if (code) document.getElementById('topic-code-el').textContent = code;
+    if (title) document.getElementById('topic-title-el').textContent = title;
+  }
+
   function detectPhaseApplicability(sections){
     var p1 = sections['PHASE I'] || '';
     if (/direct to phase\s*2|d2p2/i.test(p1)) return {label: 'Direct to Phase II — Phase I proposals rejected', level: 'd2p2'};
@@ -963,15 +992,18 @@
     var sections = parsed.sections;
     var missing = [];
 
+    updateTopicFromExtraction(parsed.code, parsed.title);
+
     // header: code / status / title — fall back to the app's current topic if not parsed
     document.getElementById('extract-code').textContent = parsed.code || document.getElementById('topic-code-el').textContent.split(' · ')[0];
     document.getElementById('extract-topic').textContent = parsed.title || document.getElementById('topic-title-el').textContent;
 
+    var releaseStatus = detectReleaseStatus(text, parsed.status);
     var statusBadge = document.getElementById('extract-status-badge');
-    if (parsed.status) {
+    if (releaseStatus) {
       statusBadge.hidden = false;
-      statusBadge.textContent = parsed.status;
-      statusBadge.className = 'font-mono text-sm font-bold px-2.5 py-1 rounded-full ' + statusBadgeClasses(parsed.status);
+      statusBadge.textContent = releaseStatus;
+      statusBadge.className = 'font-mono text-sm font-bold px-2.5 py-1 rounded-full ' + statusBadgeClasses(releaseStatus);
     } else { statusBadge.hidden = true; missing.push('release status'); }
 
     var phase = detectPhaseApplicability(sections);
@@ -1008,8 +1040,6 @@
       rules.value = sections['DESCRIPTION'];
       rules.dispatchEvent(new Event('input', {bubbles: true}));
     } else if (!rules.value.trim()) missing.push('rules and component list');
-
-    if (!document.getElementById('checklist-qa').value.trim()) missing.push('Q&A answers');
 
     document.getElementById('extract-generic-wrap').hidden = true;
 
@@ -1062,7 +1092,6 @@
     }
     if (!document.getElementById('checklist-instructions').value.trim()) missing.push('solicitation instructions');
     if (!document.getElementById('checklist-rules').value.trim()) missing.push('rules and component list');
-    if (!document.getElementById('checklist-qa').value.trim()) missing.push('Q&A answers');
 
     var missingBox = document.getElementById('extract-missing');
     if (missing.length) {
@@ -1296,6 +1325,7 @@
   // resume a saved draft: reload its topic into New Draft
   document.querySelectorAll('.resume-draft-btn').forEach(function(btn){
     btn.addEventListener('click', function(){
+      topicManuallySet = true;
       document.getElementById('topic-title-el').textContent = btn.dataset.topic;
       document.getElementById('topic-code-el').textContent = btn.dataset.code + ' · 26.BZ · USAF/AFMC';
       document.getElementById('draft-panel').hidden = true;
@@ -1330,6 +1360,7 @@
     resumeBtn.dataset.topic = topic;
     resumeBtn.dataset.code = code;
     resumeBtn.addEventListener('click', function(){
+      topicManuallySet = true;
       document.getElementById('topic-title-el').textContent = resumeBtn.dataset.topic;
       document.getElementById('topic-code-el').textContent = resumeBtn.dataset.code + ' · 26.BZ · USAF/AFMC';
       document.getElementById('draft-panel').hidden = true;
