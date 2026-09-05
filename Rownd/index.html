@@ -309,6 +309,36 @@
             <p class="text-lg text-slate-700"></p>
           </div>
         </div>
+
+        <div id="qa-guidance-empty" class="bg-white border-2 border-dashed border-slate-400 rounded-xl p-5 text-center mt-4">
+          <div class="text-slate-500 font-mono">?</div>
+          <p class="text-lg text-slate-600 font-medium mt-1">Paste Q&amp;A answers into the checklist and this fills in automatically — question types, and any answers that read as binding guidance.</p>
+        </div>
+
+        <div id="qa-guidance-panel" hidden class="bg-white border-2 border-[#3E5C7A] rounded-xl p-5 mt-4">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-[#3E5C7A]">✓</span>
+            <span class="font-display font-semibold text-xl text-slate-900">Q&amp;A Guidance</span>
+          </div>
+          <p class="text-sm text-slate-500 mb-4 pb-3 border-b-2 border-slate-300">Pattern-matched from the pasted Q&amp;A text — question types are keyword-guessed, not verified.</p>
+
+          <div class="flex items-center gap-2 mb-3 flex-wrap">
+            <span id="qa-count-badge" class="font-mono text-sm font-bold px-2.5 py-1 rounded-full bg-[#3E5C7A] text-white">0 questions</span>
+          </div>
+
+          <div id="qa-category-breakdown" class="flex flex-wrap gap-1.5 mb-4"></div>
+
+          <div id="qa-key-guidance-wrap" hidden class="mb-4">
+            <dt class="text-sm font-mono uppercase tracking-wide text-slate-500 mb-1.5">Key guidance</dt>
+            <div id="qa-key-guidance" class="flex flex-col gap-2"></div>
+          </div>
+
+          <button type="button" id="qa-list-toggle" aria-expanded="false" aria-controls="qa-list-body" class="extract-collapse-toggle flex items-center gap-1.5 w-full text-left pt-3.5 border-t-2 border-slate-200">
+            <span class="chevron inline-block transition-transform text-slate-500">▾</span>
+            <span class="text-sm font-mono uppercase tracking-wide text-slate-500">All questions</span>
+          </button>
+          <div id="qa-list-body" hidden class="flex flex-col gap-3 mt-3"></div>
+        </div>
       </div>
 
       </div>
@@ -1097,6 +1127,129 @@
       lastParsedRfiText = val;
       runStructuredExtraction(val, 'the pasted text');
     }
+  });
+
+  // ---- Q&A guidance: parses pasted Q&A text into pairs, tags each by
+  // question type via keyword-scoring, and flags answers containing
+  // binding-sounding language ("shall", "must", "required", etc.) as
+  // key guidance. Same honesty rule as the rest of this: pattern-matching
+  // only, no LLM, says so in the panel.
+  var QA_CATEGORIES = [
+    {name: 'Eligibility / Admin', color: 'bg-[#3E5C7A]/15 text-[#3E5C7A]', keywords: ['foreign national', 'citizenship', 'itar', 'eligib', 'small business', 'submission', 'deadline', 'page limit', 'format', 'volume', 'tpoc']},
+    {name: 'Pricing / Cost', color: 'bg-[#8A6A1E]/15 text-[#8A6A1E]', keywords: ['cost', 'price', 'budget', 'funding', 'dollar', 'fee']},
+    {name: 'Phase / Scope', color: 'bg-[#2E615F]/15 text-[#2E615F]', keywords: ['phase ii', 'phase iii', 'scope', 'deliverable', 'milestone', 'trl', 'transition']},
+    {name: 'Technical', color: 'bg-[#3D4A73]/15 text-[#3D4A73]', keywords: ['technical', 'requirement', 'performance', 'system', 'sensor', 'interface', 'integration', 'specification', 'architecture', 'c2', 'api', 'detect']},
+  ];
+  var GUIDANCE_SIGNALS = ['shall', 'must', 'will not', 'required', 'not applicable', 'rejected', 'no preference', 'strict', 'mandatory'];
+
+  function parseQAPairs(text){
+    var markers = [];
+    var qRe = /\bQ(?:uestion)?\s*\d*\s*[:.]\s*/gi;
+    var aRe = /\bA(?:nswer)?\s*\d*\s*[:.]\s*/gi;
+    var m;
+    while ((m = qRe.exec(text))) markers.push({type: 'Q', index: m.index, end: m.index + m[0].length});
+    while ((m = aRe.exec(text))) markers.push({type: 'A', index: m.index, end: m.index + m[0].length});
+    markers.sort(function(a, b){ return a.index - b.index; });
+    var pairs = [];
+    var current = null;
+    for (var i = 0; i < markers.length; i++){
+      var marker = markers[i];
+      var nextIndex = (i + 1 < markers.length) ? markers[i + 1].index : text.length;
+      var content = text.slice(marker.end, nextIndex).trim();
+      if (marker.type === 'Q') {
+        current = {question: content, answer: ''};
+        pairs.push(current);
+      } else if (marker.type === 'A' && current) {
+        current.answer = content;
+      }
+    }
+    return pairs.filter(function(p){ return p.question; });
+  }
+
+  // word-boundary match, not plain indexOf — otherwise short keywords like
+  // "strict" false-positive inside unrelated words like "restrictions"
+  function containsPhrase(text, phrase){
+    var escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp('\\b' + escaped + '\\b', 'i').test(text);
+  }
+
+  function categorizeQA(q, a){
+    var text = q + ' ' + a;
+    var best = null, bestScore = 0;
+    QA_CATEGORIES.forEach(function(cat){
+      var score = cat.keywords.reduce(function(n, k){ return n + (containsPhrase(text, k) ? 1 : 0); }, 0);
+      if (score > bestScore) { bestScore = score; best = cat; }
+    });
+    return best || {name: 'General', color: 'bg-slate-100 text-slate-600'};
+  }
+
+  function isKeyGuidance(answer){
+    return GUIDANCE_SIGNALS.some(function(s){ return containsPhrase(answer, s); });
+  }
+
+  function runQAGuidance(text){
+    var pairs = parseQAPairs(text);
+    document.getElementById('qa-guidance-empty').hidden = pairs.length > 0;
+    document.getElementById('qa-guidance-panel').hidden = pairs.length === 0;
+    if (!pairs.length) return;
+
+    document.getElementById('qa-count-badge').textContent = pairs.length + (pairs.length === 1 ? ' question' : ' questions');
+
+    var counts = {};
+    var categorized = pairs.map(function(p){
+      var cat = categorizeQA(p.question, p.answer);
+      counts[cat.name] = (counts[cat.name] || 0) + 1;
+      return {pair: p, category: cat};
+    });
+
+    var breakdown = document.getElementById('qa-category-breakdown');
+    breakdown.innerHTML = '';
+    Object.keys(counts).forEach(function(name){
+      var cat = categorized.find(function(c){ return c.category.name === name; }).category;
+      var span = document.createElement('span');
+      span.className = 'font-mono text-sm font-bold px-2.5 py-1 rounded-full ' + cat.color;
+      span.textContent = name + ': ' + counts[name];
+      breakdown.appendChild(span);
+    });
+
+    var keyItems = categorized.filter(function(c){ return isKeyGuidance(c.pair.answer); });
+    var keyWrap = document.getElementById('qa-key-guidance-wrap');
+    var keyList = document.getElementById('qa-key-guidance');
+    keyList.innerHTML = '';
+    if (keyItems.length) {
+      keyWrap.hidden = false;
+      keyItems.forEach(function(c){
+        var div = document.createElement('div');
+        div.className = 'bg-[#8A6A1E]/10 border-2 border-[#8A6A1E]/30 rounded-lg p-3';
+        var qEl = document.createElement('div'); qEl.className = 'text-lg font-semibold text-slate-900 mb-1'; qEl.textContent = c.pair.question;
+        var aEl = document.createElement('div'); aEl.className = 'text-lg text-slate-700'; aEl.textContent = c.pair.answer;
+        div.append(qEl, aEl);
+        keyList.appendChild(div);
+      });
+    } else { keyWrap.hidden = true; }
+
+    var listBody = document.getElementById('qa-list-body');
+    listBody.innerHTML = '';
+    categorized.forEach(function(c){
+      var div = document.createElement('div');
+      div.className = 'border-2 border-slate-200 rounded-lg p-3';
+      var badge = document.createElement('span');
+      badge.className = 'font-mono text-sm font-bold px-2 py-0.5 rounded-full ' + c.category.color;
+      badge.textContent = c.category.name;
+      var qEl = document.createElement('div'); qEl.className = 'text-lg font-semibold text-slate-900 mt-1.5 mb-1'; qEl.textContent = c.pair.question;
+      var aEl = document.createElement('div'); aEl.className = 'text-lg text-slate-700'; aEl.textContent = c.pair.answer;
+      div.append(badge, qEl, aEl);
+      listBody.appendChild(div);
+    });
+  }
+
+  var checklistQaTa = document.getElementById('checklist-qa');
+  var lastParsedQaText = '';
+  checklistQaTa.addEventListener('input', function(){
+    var val = checklistQaTa.value;
+    if (val === lastParsedQaText) return;
+    lastParsedQaText = val;
+    runQAGuidance(val);
   });
 
   // resume a saved draft: reload its topic into New Draft
