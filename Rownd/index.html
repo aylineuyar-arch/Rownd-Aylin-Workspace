@@ -17,8 +17,8 @@
 <style>
   body{ background:#f1f5f9; color:#0f172a; }
   /* color language, reused deliberately across pages + categories:
-     indigo #3D4A73 = New Draft / Technical · teal #2E615F = New RFIs / Past Performance
-     gold #8A6A1E = Templates / Pricing / proven-phrasing · sage #3F6647 = won · rust #A34A34 = lost */
+     indigo #3D4A73 = New Draft · teal #2E615F = New RFIs
+     gold #8A6A1E = proven-phrasing / memory · sage #3F6647 = won · rust #A34A34 = lost */
 </style>
 
 <div class="bg-slate-100 text-slate-900 font-sans text-sm leading-relaxed min-h-screen">
@@ -38,10 +38,6 @@
         data-active="bg-[#3F6647] text-white border-[#3F6647]"
         data-inactive="bg-[#3F6647]/10 text-[#3F6647] border-transparent hover:bg-[#3F6647]/20"
         class="bg-[#3F6647]/10 text-[#3F6647] border-transparent border-2 rounded-full px-4 py-1.5 font-semibold text-xs transition-colors">Historic Submissions</button>
-      <button type="button" data-section="templates"
-        data-active="bg-[#8A6A1E] text-white border-[#8A6A1E]"
-        data-inactive="bg-[#8A6A1E]/10 text-[#8A6A1E] border-transparent hover:bg-[#8A6A1E]/20"
-        class="bg-[#8A6A1E]/10 text-[#8A6A1E] border-transparent border-2 rounded-full px-4 py-1.5 font-semibold text-xs transition-colors">Proposal Templates</button>
       <button type="button" data-section="new-rfis"
         data-active="bg-[#2E615F] text-white border-[#2E615F]"
         data-inactive="bg-[#2E615F]/10 text-[#2E615F] border-transparent hover:bg-[#2E615F]/20"
@@ -54,7 +50,7 @@
   </header>
 
   <div class="px-6 py-6">
-  <div class="max-w-3xl mx-auto" id="narrow-sections">
+  <div class="max-w-5xl mx-auto" id="narrow-sections">
 
     <!-- ========== NEW DRAFT ========== -->
     <section id="section-new-draft">
@@ -78,6 +74,36 @@
         <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-nd"></ul>
       </div>
 
+      <div class="bg-white border-2 border-slate-300 rounded-xl p-4 mb-4">
+        <div class="flex items-center justify-between mb-3 pb-3 border-b-2 border-slate-300">
+          <span class="font-display font-semibold text-base text-slate-900">Draft Checklist</span>
+          <span id="checklist-progress" class="font-mono text-[10.5px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">0 / 3</span>
+        </div>
+        <div class="grid gap-4">
+          <div class="checklist-item">
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-xs font-bold transition-colors">✓</span>
+              <label class="font-semibold text-[13px] text-slate-900" for="checklist-instructions">Solicitation instructions</label>
+            </div>
+            <textarea id="checklist-instructions" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-[13px] placeholder:text-slate-400" placeholder="Paste the solicitation instructions here…"></textarea>
+          </div>
+          <div class="checklist-item">
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-xs font-bold transition-colors">✓</span>
+              <label class="font-semibold text-[13px] text-slate-900" for="checklist-rules">Rules and component list</label>
+            </div>
+            <textarea id="checklist-rules" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-[13px] placeholder:text-slate-400" placeholder="Paste the rules and component list here…"></textarea>
+          </div>
+          <div class="checklist-item">
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-xs font-bold transition-colors">✓</span>
+              <label class="font-semibold text-[13px] text-slate-900" for="checklist-qa">Q&amp;A answers</label>
+            </div>
+            <textarea id="checklist-qa" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-[13px] placeholder:text-slate-400" placeholder="Paste the Q&amp;A answers here…"></textarea>
+          </div>
+        </div>
+      </div>
+
       <div class="flex items-center gap-2.5 mb-4">
         <span class="text-[11px] text-slate-600 font-medium">Generate with</span>
         <div class="inline-flex bg-white border-2 border-slate-300 rounded-lg p-0.5 gap-0.5" role="group" aria-label="Model">
@@ -98,7 +124,7 @@
           <span id="model-badge" class="font-mono text-[10.5px] px-2 py-0.5 rounded-full bg-[#3D4A73] text-white">Claude Fable</span>
         </div>
 
-        <div id="draft-body" class="text-slate-700 leading-7">
+        <div id="draft-body" class="text-slate-700 leading-7 max-w-prose">
           <p id="draft-fable">Our approach decomposes the targeting stack into three independently testable modules — sensor fusion, engagement scoring, and weaponeering handoff — each exposed through a documented, government-owned interface. <mark class="bg-[#8A6A1E]/25 text-slate-900 font-medium px-1 rounded shadow-[inset_0_-2px_0_0_#8A6A1E]">This modular, open-systems architecture<span class="font-mono text-[9.5px] text-[#8A6A1E] font-bold align-super ml-0.5">used in 4 wins</span></mark> shortens the integration timeline for downstream primes and satisfies WOSA compliance without a full stack rewrite. Phase I validates the sensor fusion module against a recorded target set; Phase II demonstrates the full stack in a representative embedded environment with a live over-the-air weapons interface.</p>
           <p id="draft-gemini" hidden>We propose a three-module targeting stack — sensor fusion, engagement scoring, and weaponeering handoff — connected through open, government-owned interfaces. Phase I proves out sensor fusion against a recorded target set; Phase II fields the complete stack in an embedded, WOSA-compliant environment with a live weapons interface.</p>
         </div>
@@ -204,53 +230,6 @@
               <button type="button" data-tag="won" aria-pressed="false" class="tag-btn border-2 border-slate-400 bg-white text-slate-700 rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-colors">Won</button>
               <button type="button" data-tag="lost" aria-pressed="false" class="tag-btn border-2 border-slate-400 bg-white text-slate-700 rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-colors">Lost</button>
             </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== PROPOSAL TEMPLATES ========== -->
-    <section id="section-templates" hidden>
-      <h1 class="font-display font-semibold text-2xl text-[#8A6A1E] mb-4">Proposal Templates</h1>
-
-      <div class="upload-zone border-2 border-dashed border-[#8A6A1E]/40 hover:border-[#8A6A1E]/60 rounded-xl bg-[#8A6A1E]/[0.06] px-4 py-3 mb-4 cursor-pointer transition-colors" data-upload="pt">
-        <input type="file" id="file-pt" multiple hidden>
-        <div class="flex items-center gap-3 flex-wrap">
-          <span class="text-[#8A6A1E]">⇧</span>
-          <span class="text-xs"><strong class="font-semibold text-slate-800">Add a template</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#8A6A1E] font-bold underline decoration-2 underline-offset-2">browse</button></span>
-          <span class="text-[11px] text-slate-600 ml-auto">.docx skeleton, boilerplate figures</span>
-        </div>
-        <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-pt"></ul>
-      </div>
-
-      <div class="bg-white border-2 border-slate-300 rounded-xl p-4">
-        <div class="flex flex-col">
-          <div class="flex items-center gap-3.5 py-3 border-b-2 border-slate-300">
-            <div class="flex-1 min-w-0">
-              <div class="font-semibold text-[13px] text-slate-900">Technical Approach — DoD SBIR</div>
-              <div class="text-[11.5px] text-slate-600 mt-0.5 flex items-center gap-2">
-                <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#3D4A73] text-white">Technical</span> updated 2026-07-11
-              </div>
-            </div>
-            <button type="button" data-section="new-draft" class="nav-jump bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">Use template</button>
-          </div>
-          <div class="flex items-center gap-3.5 py-3 border-b-2 border-slate-300">
-            <div class="flex-1 min-w-0">
-              <div class="font-semibold text-[13px] text-slate-900">Past Performance — Standard</div>
-              <div class="text-[11.5px] text-slate-600 mt-0.5 flex items-center gap-2">
-                <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#2E615F] text-white">Past Performance</span> updated 2026-06-30
-              </div>
-            </div>
-            <button type="button" data-section="new-draft" class="nav-jump bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">Use template</button>
-          </div>
-          <div class="flex items-center gap-3.5 py-3">
-            <div class="flex-1 min-w-0">
-              <div class="font-semibold text-[13px] text-slate-900">Pricing Narrative — Phase I/II</div>
-              <div class="text-[11.5px] text-slate-600 mt-0.5 flex items-center gap-2">
-                <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#8A6A1E] text-white">Pricing</span> updated 2026-05-19
-              </div>
-            </div>
-            <button type="button" data-section="new-draft" class="nav-jump bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">Use template</button>
           </div>
         </div>
       </div>
@@ -541,6 +520,28 @@
   });
   document.querySelectorAll('#draft-tabs button').forEach(function(btn){
     btn.addEventListener('click', function(){ setDraftTab(btn.dataset.tab); });
+  });
+
+  // draft checklist — auto-check items as text is pasted/typed in
+  var checklistInputs = document.querySelectorAll('.checklist-input');
+  function updateChecklistProgress(){
+    var done = [...checklistInputs].filter(function(t){ return t.value.trim().length > 0; }).length;
+    var badge = document.getElementById('checklist-progress');
+    badge.textContent = done + ' / ' + checklistInputs.length;
+    badge.className = 'font-mono text-[10.5px] px-2 py-0.5 rounded-full ' +
+      (done === checklistInputs.length ? 'bg-[#3D4A73] text-white' : 'bg-slate-100 text-slate-500');
+  }
+  checklistInputs.forEach(function(ta){
+    var check = ta.closest('.checklist-item').querySelector('.checklist-check');
+    ta.addEventListener('input', function(){
+      var filled = ta.value.trim().length > 0;
+      check.classList.toggle('border-[#3D4A73]', filled);
+      check.classList.toggle('bg-[#3D4A73]', filled);
+      check.classList.toggle('text-white', filled);
+      check.classList.toggle('border-slate-400', !filled);
+      check.classList.toggle('text-transparent', !filled);
+      updateChecklistProgress();
+    });
   });
 
   // improve-selection enablement
