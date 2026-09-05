@@ -77,9 +77,16 @@
       <div class="bg-white border-2 border-slate-300 rounded-xl p-4 mb-4">
         <div class="flex items-center justify-between mb-3 pb-3 border-b-2 border-slate-300">
           <span class="font-display font-semibold text-base text-slate-900">Draft Checklist</span>
-          <span id="checklist-progress" class="font-mono text-[10.5px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">0 / 3</span>
+          <span id="checklist-progress" class="font-mono text-[10.5px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">0 / 4</span>
         </div>
         <div class="grid gap-4">
+          <div class="checklist-item">
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-xs font-bold transition-colors">✓</span>
+              <label class="font-semibold text-[13px] text-slate-900" for="checklist-rfi-details">RFI details</label>
+            </div>
+            <textarea id="checklist-rfi-details" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-[13px] placeholder:text-slate-400" placeholder="Paste the full RFI / topic details here…"></textarea>
+          </div>
           <div class="checklist-item">
             <div class="flex items-center gap-2 mb-1.5">
               <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-xs font-bold transition-colors">✓</span>
