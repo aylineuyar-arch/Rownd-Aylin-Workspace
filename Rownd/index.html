@@ -225,20 +225,59 @@
         </div>
 
         <div id="extracted-info-panel" hidden class="bg-white border-2 border-[#3D4A73] rounded-xl p-5">
-          <div class="flex items-center gap-2 mb-4 pb-3 border-b-2 border-slate-300">
+          <div class="flex items-center gap-2 mb-1">
             <span class="text-[#3D4A73]">✓</span>
-            <span class="font-display font-semibold text-xl text-slate-900">Extracted from PDF</span>
+            <span class="font-display font-semibold text-xl text-slate-900">Extracted Topic Info</span>
           </div>
-          <p class="text-sm text-slate-500 mb-4 -mt-2">Page count is read directly from the file. Due date and format are pattern-matched from the extracted text — verify before relying on them.</p>
-          <dl class="grid gap-3 mb-4">
-            <div>
-              <dt class="text-sm font-mono uppercase tracking-wide text-slate-500">Topic</dt>
-              <dd id="extract-topic" class="text-lg font-semibold text-slate-900">—</dd>
-            </div>
-            <div>
-              <dt class="text-sm font-mono uppercase tracking-wide text-slate-500">Topic number</dt>
-              <dd id="extract-code" class="text-lg font-mono text-slate-900">—</dd>
-            </div>
+          <p class="text-sm text-slate-500 mb-4 pb-3 border-b-2 border-slate-300">Pattern-matched from pasted/extracted text — not the live API yet. Verify before relying on it.</p>
+
+          <div class="mb-4">
+            <div id="extract-code" class="font-mono text-lg text-slate-600">—</div>
+            <div id="extract-topic" class="font-display font-semibold text-2xl text-slate-900 leading-snug mt-0.5">—</div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span id="extract-status-badge" hidden class="font-mono text-sm font-bold px-2.5 py-1 rounded-full"></span>
+            <span id="extract-phase-badge" hidden class="font-mono text-sm font-bold px-2.5 py-1 rounded-full bg-[#8A6A1E]/15 text-[#8A6A1E]"></span>
+            <span id="extract-cmmc-badge" hidden class="font-mono text-sm font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600"></span>
+          </div>
+
+          <div id="extract-tech-areas-wrap" hidden class="mb-3.5">
+            <dt class="text-sm font-mono uppercase tracking-wide text-slate-500 mb-1.5">Technology areas</dt>
+            <div id="extract-tech-areas" class="flex flex-wrap gap-1.5"></div>
+          </div>
+
+          <div id="extract-mod-priorities-wrap" hidden class="mb-3.5">
+            <dt class="text-sm font-mono uppercase tracking-wide text-slate-500 mb-1.5">Modernization priorities</dt>
+            <div id="extract-mod-priorities" class="flex flex-wrap gap-1.5"></div>
+          </div>
+
+          <div id="extract-keywords-wrap" hidden class="mb-4">
+            <dt class="text-sm font-mono uppercase tracking-wide text-slate-500 mb-1.5">Keywords</dt>
+            <div id="extract-keywords" class="flex flex-wrap gap-1.5"></div>
+          </div>
+
+          <div id="extract-objective-wrap" hidden class="mb-4 pt-3.5 border-t-2 border-slate-200">
+            <dt class="text-sm font-mono uppercase tracking-wide text-slate-500 mb-1.5">Objective</dt>
+            <dd id="extract-objective" class="text-lg text-slate-800 leading-relaxed"></dd>
+          </div>
+
+          <div id="extract-description-wrap" hidden class="mb-4 pt-3.5 border-t-2 border-slate-200">
+            <dt class="text-sm font-mono uppercase tracking-wide text-slate-500 mb-1.5">Description</dt>
+            <dd id="extract-description" class="text-lg text-slate-800 leading-relaxed"></dd>
+          </div>
+
+          <div id="extract-phase1-wrap" hidden class="mb-4 pt-3.5 border-t-2 border-slate-200">
+            <dt class="text-sm font-mono uppercase tracking-wide text-slate-500 mb-1.5">Phase I</dt>
+            <dd id="extract-phase1" class="text-lg text-slate-800 leading-relaxed"></dd>
+          </div>
+
+          <div id="extract-phase2-wrap" hidden class="mb-4 pt-3.5 border-t-2 border-slate-200">
+            <dt class="text-sm font-mono uppercase tracking-wide text-slate-500 mb-1.5">Phase II</dt>
+            <dd id="extract-phase2" class="text-lg text-slate-800 leading-relaxed"></dd>
+          </div>
+
+          <div id="extract-generic-wrap" hidden class="grid gap-3 mb-4 pt-3.5 border-t-2 border-slate-200">
             <div>
               <dt class="text-sm font-mono uppercase tracking-wide text-slate-500">Page count</dt>
               <dd id="extract-pages" class="text-lg text-slate-900">—</dd>
@@ -251,7 +290,8 @@
               <dt class="text-sm font-mono uppercase tracking-wide text-slate-500">Format</dt>
               <dd id="extract-format" class="text-lg text-slate-900">—</dd>
             </div>
-          </dl>
+          </div>
+
           <div id="extract-missing" hidden class="bg-[#A34A34]/10 border-2 border-[#A34A34]/40 rounded-lg p-3">
             <div class="font-semibold text-lg text-[#A34A34] mb-1">⚠ Not found automatically</div>
             <p class="text-lg text-slate-700"></p>
@@ -779,32 +819,212 @@
     return {numPages: pdf.numPages, pages: pages, text: pages.join('\n\n')};
   }
 
+  // ---- structured DoD SBIR/STTR topic-listing parser ----
+  // This is text pattern-matching against the section headers real topic
+  // listings use (the same fields the public topics API exposes: topicCode,
+  // topicTitle, cmmcLevel, technologyAreas, keywords, objective, description,
+  // phase1/2/3Description) — NOT connected to that API yet, per instruction.
+  // Works on pasted text or PDF-extracted text, whichever arrives.
+  var SECTION_HEADERS = [
+    'PROJECTED CMMC LEVEL REQUIREMENT',
+    'TECHNOLOGY AREAS',
+    'MODERNIZATION PRIORITIES',
+    'KEYWORDS',
+    'ADDITIONAL INFORMATION',
+    'OBJECTIVE',
+    'DESCRIPTION',
+    'PHASE III DUAL USE APPLICATIONS',
+    'PHASE III',
+    'PHASE II',
+    'PHASE I',
+  ];
+
+  function parseTopicSections(text){
+    var norm = text.replace(/[ \t]+/g, ' ');
+    var positions = [];
+    SECTION_HEADERS.forEach(function(h){
+      var re = new RegExp('\\b' + h.replace(/ /g, '\\s+') + '\\s*:?', 'i');
+      var m = norm.match(re);
+      if (m) positions.push({header: h, index: m.index, len: m[0].length});
+    });
+    positions.sort(function(a, b){ return a.index - b.index; });
+    var sections = {};
+    for (var i = 0; i < positions.length; i++){
+      var start = positions[i].index + positions[i].len;
+      var end = (i + 1 < positions.length) ? positions[i + 1].index : norm.length;
+      var val = norm.slice(start, end).trim();
+      if (val && !/^n\/a$/i.test(val)) sections[positions[i].header] = val;
+    }
+    var headerText = positions.length ? norm.slice(0, positions[0].index).trim() : norm.trim();
+    var headerMatch = headerText.match(/^([A-Z0-9\-]+)\s*:\s*([A-Z][A-Z\- ]*?)\s+-\s+(.+)$/);
+    return {
+      code: headerMatch ? headerMatch[1].trim() : null,
+      status: headerMatch ? headerMatch[2].trim() : null,
+      title: headerMatch ? headerMatch[3].trim() : null,
+      sections: sections,
+      isStructured: positions.length >= 3,
+    };
+  }
+
+  function splitList(str, sep){
+    return str ? str.split(sep).map(function(s){ return s.trim(); }).filter(Boolean) : [];
+  }
+
+  function renderTags(containerId, wrapId, items, colorClass){
+    var wrap = document.getElementById(wrapId);
+    var container = document.getElementById(containerId);
+    container.innerHTML = '';
+    if (!items.length) { wrap.hidden = true; return; }
+    wrap.hidden = false;
+    items.forEach(function(item){
+      var span = document.createElement('span');
+      span.className = 'tag-chip font-mono text-sm font-bold px-2.5 py-1 rounded-full cursor-default ' + colorClass;
+      span.textContent = item;
+      container.appendChild(span);
+    });
+  }
+
+  function statusBadgeClasses(status){
+    if (!status) return 'bg-slate-100 text-slate-600';
+    var s = status.toUpperCase();
+    if (s.indexOf('PRE') !== -1) return 'bg-[#8A6A1E]/15 text-[#8A6A1E]';
+    if (s.indexOf('OPEN') !== -1) return 'bg-[#3F6647]/15 text-[#3F6647]';
+    if (s.indexOf('CLOS') !== -1) return 'bg-[#A34A34]/15 text-[#A34A34]';
+    return 'bg-slate-100 text-slate-600';
+  }
+
+  function detectPhaseApplicability(sections){
+    var p1 = sections['PHASE I'] || '';
+    if (/direct to phase\s*2|d2p2/i.test(p1)) return {label: 'Direct to Phase II — Phase I proposals rejected', level: 'd2p2'};
+    if (/phase\s*i\s*\/\s*ii|d2p2\s*&\s*p2/i.test(p1)) return {label: 'Phase I eligible', level: 'phase1'};
+    if (p1) return {label: 'See Phase I section', level: 'unknown'};
+    return null;
+  }
+
+  function setText(id, value){
+    var el = document.getElementById(id);
+    var wrap = document.getElementById(id + '-wrap');
+    if (value) { el.textContent = value; if (wrap) wrap.hidden = false; }
+    else if (wrap) wrap.hidden = true;
+  }
+
+  function runStructuredExtraction(text, sourceLabel){
+    document.getElementById('extracted-info-empty').hidden = true;
+    document.getElementById('extracted-info-error').hidden = true;
+    document.getElementById('extracted-info-loading').hidden = true;
+
+    var parsed = parseTopicSections(text);
+    var sections = parsed.sections;
+    var missing = [];
+
+    // header: code / status / title — fall back to the app's current topic if not parsed
+    document.getElementById('extract-code').textContent = parsed.code || document.getElementById('topic-code-el').textContent.split(' · ')[0];
+    document.getElementById('extract-topic').textContent = parsed.title || document.getElementById('topic-title-el').textContent;
+
+    var statusBadge = document.getElementById('extract-status-badge');
+    if (parsed.status) {
+      statusBadge.hidden = false;
+      statusBadge.textContent = parsed.status;
+      statusBadge.className = 'font-mono text-sm font-bold px-2.5 py-1 rounded-full ' + statusBadgeClasses(parsed.status);
+    } else { statusBadge.hidden = true; missing.push('release status'); }
+
+    var phase = detectPhaseApplicability(sections);
+    var phaseBadge = document.getElementById('extract-phase-badge');
+    if (phase) { phaseBadge.hidden = false; phaseBadge.textContent = phase.label; }
+    else { phaseBadge.hidden = true; missing.push('phase applicability'); }
+
+    var cmmcBadge = document.getElementById('extract-cmmc-badge');
+    if (sections['PROJECTED CMMC LEVEL REQUIREMENT']) {
+      cmmcBadge.hidden = false;
+      cmmcBadge.textContent = 'CMMC ' + sections['PROJECTED CMMC LEVEL REQUIREMENT'];
+    } else { cmmcBadge.hidden = true; }
+
+    renderTags('extract-tech-areas', 'extract-tech-areas-wrap', splitList(sections['TECHNOLOGY AREAS'], '|'), 'bg-[#3D4A73]/15 text-[#3D4A73]');
+    renderTags('extract-mod-priorities', 'extract-mod-priorities-wrap', splitList(sections['MODERNIZATION PRIORITIES'], '|'), 'bg-[#2E615F]/15 text-[#2E615F]');
+    var keywords = splitList(sections['KEYWORDS'], ',');
+    renderTags('extract-keywords', 'extract-keywords-wrap', keywords, 'bg-[#3E5C7A]/15 text-[#3E5C7A]');
+    if (!keywords.length) missing.push('keywords');
+
+    setText('extract-objective', sections['OBJECTIVE']);
+    setText('extract-description', sections['DESCRIPTION']);
+    setText('extract-phase1', sections['PHASE I']);
+    setText('extract-phase2', sections['PHASE II']);
+
+    // distribute parsed sections into the actual checklist boxes, not one blob
+    var instructions = document.getElementById('checklist-instructions');
+    if (!instructions.value.trim() && sections['PHASE I']) {
+      instructions.value = sections['PHASE I'];
+      instructions.dispatchEvent(new Event('input', {bubbles: true}));
+    } else if (!instructions.value.trim()) missing.push('solicitation instructions');
+
+    var rules = document.getElementById('checklist-rules');
+    if (!rules.value.trim() && sections['DESCRIPTION']) {
+      rules.value = sections['DESCRIPTION'];
+      rules.dispatchEvent(new Event('input', {bubbles: true}));
+    } else if (!rules.value.trim()) missing.push('rules and component list');
+
+    if (!document.getElementById('checklist-qa').value.trim()) missing.push('Q&A answers');
+
+    document.getElementById('extract-generic-wrap').hidden = true;
+
+    var missingBox = document.getElementById('extract-missing');
+    if (missing.length) {
+      missingBox.hidden = false;
+      missingBox.querySelector('p').textContent = 'Not found automatically: ' + missing.join(', ') + '. Review ' + sourceLabel + ', or fill these in manually.';
+    } else {
+      missingBox.hidden = true;
+    }
+
+    document.getElementById('extracted-info-panel').hidden = false;
+  }
+
+  // fallback for generic (non-topic-format) PDFs where section parsing finds nothing
   function findDueDate(text){
     var m = text.match(/\b(0?[1-9]|1[0-2])\/(0?[1-9]|[12]\d|3[01])\/(\d{4})\b[^.]{0,25}/);
     if (m) return m[0].trim();
     m = text.match(/\b\d{4}-\d{2}-\d{2}\b[^.]{0,25}/);
     return m ? m[0].trim() : null;
   }
-
   function findFormat(text){
     var parts = [];
     var fontMatch = text.match(/\b\d{1,2}\s?pt\b[^,.]{0,25}/i);
     var marginMatch = text.match(/\b\d(\.\d)?\s?inch\b[^,.]{0,20}/i);
     if (fontMatch) parts.push(fontMatch[0].trim());
-    if (marginMatch && marginMatch[0].trim() !== (fontMatch && fontMatch[0].trim())) {
-      parts.push(marginMatch[0].trim());
-    }
+    if (marginMatch && marginMatch[0].trim() !== (fontMatch && fontMatch[0].trim())) parts.push(marginMatch[0].trim());
     return parts.length ? parts.join(', ') : null;
   }
+  function runGenericExtraction(text, numPages){
+    document.getElementById('extract-code').textContent = document.getElementById('topic-code-el').textContent.split(' · ')[0];
+    document.getElementById('extract-topic').textContent = document.getElementById('topic-title-el').textContent;
+    ['extract-status-badge','extract-phase-badge','extract-cmmc-badge'].forEach(function(id){ document.getElementById(id).hidden = true; });
+    ['extract-tech-areas-wrap','extract-mod-priorities-wrap','extract-keywords-wrap','extract-objective-wrap','extract-description-wrap','extract-phase1-wrap','extract-phase2-wrap'].forEach(function(id){ document.getElementById(id).hidden = true; });
 
-  function findByKeywords(pages, keywords){
-    var best = null, bestScore = 0;
-    pages.forEach(function(p){
-      var lower = p.toLowerCase();
-      var score = keywords.reduce(function(n, k){ return n + (lower.indexOf(k) !== -1 ? 1 : 0); }, 0);
-      if (score > bestScore){ bestScore = score; best = p; }
-    });
-    return bestScore > 0 ? best : null;
+    var missing = [];
+    document.getElementById('extract-generic-wrap').hidden = false;
+    document.getElementById('extract-pages').textContent = numPages ? (numPages + (numPages === 1 ? ' page' : ' pages')) : '—';
+    var due = findDueDate(text);
+    document.getElementById('extract-due').textContent = due || 'Not found in document';
+    if (!due) missing.push('due date');
+    var format = findFormat(text);
+    document.getElementById('extract-format').textContent = format || 'Not found in document';
+    if (!format) missing.push('formatting requirements');
+
+    var rfiTa = document.getElementById('checklist-rfi-details');
+    if (!rfiTa.value.trim() && text) {
+      rfiTa.value = text.length > 4000 ? text.slice(0, 4000) + '\n\n[truncated]' : text;
+      rfiTa.dispatchEvent(new Event('input', {bubbles: true}));
+    }
+    if (!document.getElementById('checklist-instructions').value.trim()) missing.push('solicitation instructions');
+    if (!document.getElementById('checklist-rules').value.trim()) missing.push('rules and component list');
+    if (!document.getElementById('checklist-qa').value.trim()) missing.push('Q&A answers');
+
+    var missingBox = document.getElementById('extract-missing');
+    if (missing.length) {
+      missingBox.hidden = false;
+      missingBox.querySelector('p').textContent = 'Not found automatically: ' + missing.join(', ') + '. This doesn\'t look like a standard topic listing, so review manually.';
+    } else missingBox.hidden = true;
+
+    document.getElementById('extracted-info-panel').hidden = false;
   }
 
   async function runPdfExtraction(file){
@@ -812,55 +1032,14 @@
     document.getElementById('extracted-info-panel').hidden = true;
     document.getElementById('extracted-info-error').hidden = true;
     document.getElementById('extracted-info-loading').hidden = false;
-
     try {
       var result = await extractPdfText(file);
-      var missing = [];
-
-      document.getElementById('extract-pages').textContent = result.numPages + (result.numPages === 1 ? ' page' : ' pages');
-      document.getElementById('extract-topic').textContent = document.getElementById('topic-title-el').textContent;
-      document.getElementById('extract-code').textContent = document.getElementById('topic-code-el').textContent.split(' · ')[0];
-
-      var due = findDueDate(result.text);
-      document.getElementById('extract-due').textContent = due || 'Not found in document';
-      if (!due) missing.push('due date');
-
-      var format = findFormat(result.text);
-      document.getElementById('extract-format').textContent = format || 'Not found in document';
-      if (!format) missing.push('formatting requirements');
-
-      var rfiTa = document.getElementById('checklist-rfi-details');
-      if (!rfiTa.value.trim() && result.text) {
-        rfiTa.value = result.text.length > 4000 ? result.text.slice(0, 4000) + '\n\n[truncated]' : result.text;
-        rfiTa.dispatchEvent(new Event('input', {bubbles: true}));
-      }
-
-      var instructions = document.getElementById('checklist-instructions');
-      if (!instructions.value.trim()) {
-        var foundInstr = findByKeywords(result.pages, ['instruction', 'margin', 'font', 'due', 'submit', 'shall not exceed', 'page limit']);
-        if (foundInstr) { instructions.value = foundInstr; instructions.dispatchEvent(new Event('input', {bubbles: true})); }
-        else missing.push('solicitation instructions');
-      }
-
-      var rules = document.getElementById('checklist-rules');
-      if (!rules.value.trim()) {
-        var foundRules = findByKeywords(result.pages, ['required component', 'shall include', 'interface', 'compliant', 'wosa', 'cover sheet', 'cost volume', 'component list']);
-        if (foundRules) { rules.value = foundRules; rules.dispatchEvent(new Event('input', {bubbles: true})); }
-        else missing.push('rules and component list');
-      }
-
-      if (!document.getElementById('checklist-qa').value.trim()) missing.push('Q&A answers');
-
-      var missingBox = document.getElementById('extract-missing');
-      if (missing.length) {
-        missingBox.hidden = false;
-        missingBox.querySelector('p').textContent = 'Not found automatically: ' + missing.join(', ') + '. Review the extracted text above, or paste these manually.';
+      var parsed = parseTopicSections(result.text);
+      if (parsed.isStructured) {
+        runStructuredExtraction(result.text, 'the extracted PDF text');
       } else {
-        missingBox.hidden = true;
+        runGenericExtraction(result.text, result.numPages);
       }
-
-      document.getElementById('extracted-info-loading').hidden = true;
-      document.getElementById('extracted-info-panel').hidden = false;
     } catch (err) {
       document.getElementById('extracted-info-loading').hidden = true;
       document.getElementById('extracted-info-error').hidden = false;
@@ -892,6 +1071,21 @@
   }
   checklistRfiZone.addEventListener('drop', function(e){ handleRfiFile(e.dataTransfer.files); });
   checklistRfiInput.addEventListener('change', function(){ handleRfiFile(checklistRfiInput.files); });
+
+  // also parse when the topic text is pasted/typed directly into RFI details
+  // (only fires once real section-header structure is detected, so normal
+  // typing doesn't trigger it on every keystroke)
+  var rfiDetailsTa = document.getElementById('checklist-rfi-details');
+  var lastParsedRfiText = '';
+  rfiDetailsTa.addEventListener('input', function(){
+    var val = rfiDetailsTa.value;
+    if (val === lastParsedRfiText || val.trim().length < 40) return;
+    var parsed = parseTopicSections(val);
+    if (parsed.isStructured) {
+      lastParsedRfiText = val;
+      runStructuredExtraction(val, 'the pasted text');
+    }
+  });
 
   // resume a saved draft: reload its topic into New Draft
   document.querySelectorAll('.resume-draft-btn').forEach(function(btn){
