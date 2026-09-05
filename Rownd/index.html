@@ -61,6 +61,9 @@
     <section id="section-new-draft">
       <h1 class="font-display font-semibold text-5xl text-[#3D4A73] mb-4">New Draft</h1>
 
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 items-start">
+      <div class="min-w-0">
+
       <div class="flex justify-between items-center gap-3 flex-wrap bg-[#3D4A73]/[0.08] border-2 border-[#3D4A73]/30 rounded-xl px-4 py-3 mb-3.5">
         <div>
           <div class="font-semibold text-slate-900" id="topic-title-el">Automated Lethality</div>
@@ -192,6 +195,50 @@
             </div>
           </div>
         </div>
+      </div>
+
+      </div>
+
+      <div class="lg:sticky lg:top-6">
+        <div id="extracted-info-empty" class="bg-white border-2 border-dashed border-slate-400 rounded-xl p-5 text-center">
+          <div class="text-slate-500 font-mono">⇧</div>
+          <p class="text-lg text-slate-600 font-medium mt-1">Upload the RFI PDF above and this panel fills in automatically — topic, page count, due date, and what's still missing from your checklist.</p>
+        </div>
+
+        <div id="extracted-info-panel" hidden class="bg-white border-2 border-[#3D4A73] rounded-xl p-5">
+          <div class="flex items-center gap-2 mb-4 pb-3 border-b-2 border-slate-300">
+            <span class="text-[#3D4A73]">✓</span>
+            <span class="font-display font-semibold text-xl text-slate-900">Extracted from PDF</span>
+          </div>
+          <dl class="grid gap-3 mb-4">
+            <div>
+              <dt class="text-sm font-mono uppercase tracking-wide text-slate-500">Topic</dt>
+              <dd id="extract-topic" class="text-lg font-semibold text-slate-900">—</dd>
+            </div>
+            <div>
+              <dt class="text-sm font-mono uppercase tracking-wide text-slate-500">Topic number</dt>
+              <dd id="extract-code" class="text-lg font-mono text-slate-900">—</dd>
+            </div>
+            <div>
+              <dt class="text-sm font-mono uppercase tracking-wide text-slate-500">Page count</dt>
+              <dd class="text-lg text-slate-900">14 pages (Vol. I Technical)</dd>
+            </div>
+            <div>
+              <dt class="text-sm font-mono uppercase tracking-wide text-slate-500">Due date</dt>
+              <dd class="text-lg text-slate-900">2026-09-30, 5:00 PM ET</dd>
+            </div>
+            <div>
+              <dt class="text-sm font-mono uppercase tracking-wide text-slate-500">Format</dt>
+              <dd class="text-lg text-slate-900">12pt Times New Roman, 1" margins</dd>
+            </div>
+          </dl>
+          <div class="bg-[#A34A34]/10 border-2 border-[#A34A34]/40 rounded-lg p-3">
+            <div class="font-semibold text-lg text-[#A34A34] mb-1">⚠ Missing from this document</div>
+            <p class="text-lg text-slate-700">Q&amp;A answers weren't found in the PDF — check the SBIR/STTR feed's amendments, or paste them into the checklist manually.</p>
+          </div>
+        </div>
+      </div>
+
       </div>
     </section>
 
@@ -643,9 +690,37 @@
   if (rfiFileList) {
     var rfiItem = rfiFileList.closest('.checklist-item');
     var rfiTextarea = document.getElementById('checklist-rfi-details');
+    var prevRfiFileCount = 0;
     new MutationObserver(function(){
-      setChecklistChecked(rfiItem, rfiFileList.children.length > 0 || rfiTextarea.value.trim().length > 0);
+      var count = rfiFileList.children.length;
+      setChecklistChecked(rfiItem, count > 0 || rfiTextarea.value.trim().length > 0);
+      if (count > 0 && prevRfiFileCount === 0) runPdfExtraction();
+      if (count === 0 && prevRfiFileCount > 0) resetPdfExtraction();
+      prevRfiFileCount = count;
     }).observe(rfiFileList, {childList: true});
+  }
+
+  // mock PDF extraction — no real parsing, just demonstrates the flow:
+  // auto-fill what a PDF scan would plausibly find, flag what it wouldn't.
+  function runPdfExtraction(){
+    var instructions = document.getElementById('checklist-instructions');
+    var rules = document.getElementById('checklist-rules');
+    if (!instructions.value.trim()) {
+      instructions.value = "Volume I (Technical) shall not exceed 15 pages, 12pt Times New Roman, 1\" margins. Submit as a single PDF via DSIP. Late submissions will not be reviewed.";
+      instructions.dispatchEvent(new Event('input', {bubbles: true}));
+    }
+    if (!rules.value.trim()) {
+      rules.value = "Required components: Cover Sheet, Technical Volume, Cost Volume, Company Commercialization Report. Sensor fusion and weaponeering handoff modules must expose documented, government-owned interfaces per WOSA.";
+      rules.dispatchEvent(new Event('input', {bubbles: true}));
+    }
+    document.getElementById('extract-topic').textContent = document.getElementById('topic-title-el').textContent;
+    document.getElementById('extract-code').textContent = document.getElementById('topic-code-el').textContent.split(' · ')[0];
+    document.getElementById('extracted-info-empty').hidden = true;
+    document.getElementById('extracted-info-panel').hidden = false;
+  }
+  function resetPdfExtraction(){
+    document.getElementById('extracted-info-empty').hidden = false;
+    document.getElementById('extracted-info-panel').hidden = true;
   }
 
   // improve-selection enablement
