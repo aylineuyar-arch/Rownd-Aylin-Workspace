@@ -257,24 +257,36 @@
             <div id="extract-keywords" class="flex flex-wrap gap-1.5"></div>
           </div>
 
-          <div id="extract-objective-wrap" hidden class="mb-4 pt-3.5 border-t-2 border-slate-200">
-            <dt class="text-sm font-mono uppercase tracking-wide text-slate-500 mb-1.5">Objective</dt>
-            <dd id="extract-objective" class="text-lg text-slate-800 leading-relaxed"></dd>
+          <div id="extract-objective-wrap" hidden class="pt-3.5 border-t-2 border-slate-200">
+            <button type="button" class="extract-collapse-toggle flex items-center gap-1.5 w-full text-left" aria-expanded="false" aria-controls="extract-objective">
+              <span class="chevron inline-block transition-transform text-slate-500">▾</span>
+              <span class="text-sm font-mono uppercase tracking-wide text-slate-500">Objective</span>
+            </button>
+            <dd id="extract-objective" hidden class="text-lg text-slate-800 leading-relaxed mt-1.5 mb-2.5"></dd>
           </div>
 
-          <div id="extract-description-wrap" hidden class="mb-4 pt-3.5 border-t-2 border-slate-200">
-            <dt class="text-sm font-mono uppercase tracking-wide text-slate-500 mb-1.5">Description</dt>
-            <dd id="extract-description" class="text-lg text-slate-800 leading-relaxed"></dd>
+          <div id="extract-description-wrap" hidden class="pt-3.5 border-t-2 border-slate-200">
+            <button type="button" class="extract-collapse-toggle flex items-center gap-1.5 w-full text-left" aria-expanded="false" aria-controls="extract-description">
+              <span class="chevron inline-block transition-transform text-slate-500">▾</span>
+              <span class="text-sm font-mono uppercase tracking-wide text-slate-500">Description</span>
+            </button>
+            <dd id="extract-description" hidden class="text-lg text-slate-800 leading-relaxed mt-1.5 mb-2.5"></dd>
           </div>
 
-          <div id="extract-phase1-wrap" hidden class="mb-4 pt-3.5 border-t-2 border-slate-200">
-            <dt class="text-sm font-mono uppercase tracking-wide text-slate-500 mb-1.5">Phase I</dt>
-            <dd id="extract-phase1" class="text-lg text-slate-800 leading-relaxed"></dd>
+          <div id="extract-phase1-wrap" hidden class="pt-3.5 border-t-2 border-slate-200">
+            <button type="button" class="extract-collapse-toggle flex items-center gap-1.5 w-full text-left" aria-expanded="false" aria-controls="extract-phase1">
+              <span class="chevron inline-block transition-transform text-slate-500">▾</span>
+              <span class="text-sm font-mono uppercase tracking-wide text-slate-500">Phase I</span>
+            </button>
+            <dd id="extract-phase1" hidden class="text-lg text-slate-800 leading-relaxed mt-1.5 mb-2.5"></dd>
           </div>
 
           <div id="extract-phase2-wrap" hidden class="mb-4 pt-3.5 border-t-2 border-slate-200">
-            <dt class="text-sm font-mono uppercase tracking-wide text-slate-500 mb-1.5">Phase II</dt>
-            <dd id="extract-phase2" class="text-lg text-slate-800 leading-relaxed"></dd>
+            <button type="button" class="extract-collapse-toggle flex items-center gap-1.5 w-full text-left" aria-expanded="false" aria-controls="extract-phase2">
+              <span class="chevron inline-block transition-transform text-slate-500">▾</span>
+              <span class="text-sm font-mono uppercase tracking-wide text-slate-500">Phase II</span>
+            </button>
+            <dd id="extract-phase2" hidden class="text-lg text-slate-800 leading-relaxed mt-1.5"></dd>
           </div>
 
           <div id="extract-generic-wrap" hidden class="grid gap-3 mb-4 pt-3.5 border-t-2 border-slate-200">
@@ -1167,6 +1179,16 @@
     insightsToggle.setAttribute('aria-expanded', String(!expanded));
     document.getElementById('insights-body').hidden = expanded;
     insightsToggle.querySelector('.chevron').style.transform = expanded ? '' : 'rotate(180deg)';
+  });
+
+  // collapsible Objective / Description / Phase I / Phase II blocks in the sidebar
+  document.querySelectorAll('.extract-collapse-toggle').forEach(function(toggle){
+    toggle.addEventListener('click', function(){
+      var expanded = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', String(!expanded));
+      document.getElementById(toggle.getAttribute('aria-controls')).hidden = expanded;
+      toggle.querySelector('.chevron').style.transform = expanded ? '' : 'rotate(180deg)';
+    });
   });
 
   // outcome tagging (Historic Submissions)
