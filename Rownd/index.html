@@ -86,7 +86,15 @@
               <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-xs font-bold transition-colors">✓</span>
               <label class="font-semibold text-[13px] text-slate-900" for="checklist-rfi-details">RFI details</label>
             </div>
-            <textarea id="checklist-rfi-details" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-[13px] placeholder:text-slate-400" placeholder="Paste the full RFI / topic details here…"></textarea>
+            <div class="upload-zone border-2 border-dashed border-[#3D4A73]/40 hover:border-[#3D4A73]/60 rounded-lg bg-[#3D4A73]/[0.04] px-3 py-2 mb-2 ml-8 cursor-pointer transition-colors" data-upload="checklist-rfi">
+              <input type="file" id="file-checklist-rfi" multiple hidden>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[#3D4A73] text-xs">⇧</span>
+                <span class="text-[11.5px]"><strong class="font-semibold text-slate-800">Upload a file</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#3D4A73] font-bold underline decoration-2 underline-offset-2 text-[11.5px]">browse</button></span>
+              </div>
+              <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-checklist-rfi"></ul>
+            </div>
+            <textarea id="checklist-rfi-details" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-[13px] placeholder:text-slate-400" placeholder="…or paste the full RFI / topic details here"></textarea>
           </div>
           <div class="checklist-item">
             <div class="flex items-center gap-2 mb-1.5">
@@ -119,9 +127,10 @@
           <button type="button" data-model="gemini" aria-pressed="false" class="model-btn px-3 py-1.5 rounded-md text-slate-600 font-semibold text-xs transition-colors">Gemini</button>
           <button type="button" data-model="both" aria-pressed="true" class="model-btn px-3 py-1.5 rounded-md bg-slate-800 text-white font-semibold text-xs transition-colors">Both</button>
         </div>
+        <button type="button" id="generate-draft-btn" class="bg-[#3D4A73] hover:bg-[#2E3A5F] text-white font-semibold text-xs px-4 py-2 rounded-lg transition-colors ml-auto">Generate Draft</button>
       </div>
 
-      <div class="bg-white border-2 border-slate-300 rounded-xl p-4">
+      <div id="draft-panel" hidden class="bg-white border-2 border-slate-300 rounded-xl p-4">
         <div class="draft-tabs flex gap-1 mb-3 pb-3 border-b-2 border-slate-300" id="draft-tabs">
           <button type="button" data-tab="fable" aria-selected="true" class="border-2 border-[#3D4A73] text-white bg-[#3D4A73] text-xs font-semibold px-3 py-1.5 rounded-md transition-colors">Fable draft</button>
           <button type="button" data-tab="gemini" aria-selected="false" class="border-2 border-slate-300 text-slate-600 bg-white text-xs font-semibold px-3 py-1.5 rounded-md transition-colors">Gemini draft</button>
@@ -497,7 +506,7 @@
       if (e.target.classList.contains('use-topic-btn')) {
         document.getElementById('topic-title-el').textContent = item.dataset.topic;
         document.getElementById('topic-code-el').textContent = item.dataset.code + ' · 26.BZ · USAF/AFMC';
-        showSection('new-draft');
+        document.getElementById('draft-panel').hidden = true; showSection('new-draft');
       }
     });
   });
@@ -514,7 +523,7 @@
   manualUseBtn.addEventListener('click', function(){
     document.getElementById('topic-title-el').textContent = manualTitle.value.trim();
     document.getElementById('topic-code-el').textContent = manualCode.value.trim();
-    showSection('new-draft');
+    document.getElementById('draft-panel').hidden = true; showSection('new-draft');
   });
 
   // model segmented control
@@ -555,27 +564,43 @@
     btn.addEventListener('click', function(){ setDraftTab(btn.dataset.tab); });
   });
 
-  // draft checklist — auto-check items as text is pasted/typed in
-  var checklistInputs = document.querySelectorAll('.checklist-input');
+  // draft checklist — auto-check items as text is pasted/typed in, or a file is uploaded.
+  // Nothing here is required — the checklist is informational, not a gate.
+  var checklistItems = document.querySelectorAll('.checklist-item');
   function updateChecklistProgress(){
-    var done = [...checklistInputs].filter(function(t){ return t.value.trim().length > 0; }).length;
+    var done = [...checklistItems].filter(function(item){
+      return item.querySelector('.checklist-check').classList.contains('bg-[#3D4A73]');
+    }).length;
     var badge = document.getElementById('checklist-progress');
-    badge.textContent = done + ' / ' + checklistInputs.length;
+    badge.textContent = done + ' / ' + checklistItems.length;
     badge.className = 'font-mono text-[10.5px] px-2 py-0.5 rounded-full ' +
-      (done === checklistInputs.length ? 'bg-[#3D4A73] text-white' : 'bg-slate-100 text-slate-500');
+      (done === checklistItems.length ? 'bg-[#3D4A73] text-white' : 'bg-slate-100 text-slate-500');
   }
-  checklistInputs.forEach(function(ta){
-    var check = ta.closest('.checklist-item').querySelector('.checklist-check');
+  function setChecklistChecked(item, filled){
+    var check = item.querySelector('.checklist-check');
+    check.classList.toggle('border-[#3D4A73]', filled);
+    check.classList.toggle('bg-[#3D4A73]', filled);
+    check.classList.toggle('text-white', filled);
+    check.classList.toggle('border-slate-400', !filled);
+    check.classList.toggle('text-transparent', !filled);
+    updateChecklistProgress();
+  }
+  document.querySelectorAll('.checklist-input').forEach(function(ta){
+    var item = ta.closest('.checklist-item');
     ta.addEventListener('input', function(){
-      var filled = ta.value.trim().length > 0;
-      check.classList.toggle('border-[#3D4A73]', filled);
-      check.classList.toggle('bg-[#3D4A73]', filled);
-      check.classList.toggle('text-white', filled);
-      check.classList.toggle('border-slate-400', !filled);
-      check.classList.toggle('text-transparent', !filled);
-      updateChecklistProgress();
+      var uploadList = item.querySelector('.file-list');
+      var hasFile = uploadList && uploadList.children.length > 0;
+      setChecklistChecked(item, ta.value.trim().length > 0 || hasFile);
     });
   });
+  var rfiFileList = document.getElementById('filelist-checklist-rfi');
+  if (rfiFileList) {
+    var rfiItem = rfiFileList.closest('.checklist-item');
+    var rfiTextarea = document.getElementById('checklist-rfi-details');
+    new MutationObserver(function(){
+      setChecklistChecked(rfiItem, rfiFileList.children.length > 0 || rfiTextarea.value.trim().length > 0);
+    }).observe(rfiFileList, {childList: true});
+  }
 
   // improve-selection enablement
   document.addEventListener('selectionchange', function(){
@@ -583,6 +608,13 @@
     var body = document.getElementById('draft-body');
     var within = sel.rangeCount > 0 && body.contains(sel.anchorNode) && String(sel).trim().length > 0;
     document.getElementById('improve-btn').disabled = !within;
+  });
+
+  // generate draft — checklist is informational only, never required to click this
+  document.getElementById('generate-draft-btn').addEventListener('click', function(){
+    var panel = document.getElementById('draft-panel');
+    panel.hidden = false;
+    panel.scrollIntoView({behavior: 'smooth', block: 'nearest'});
   });
 
   // export menu
