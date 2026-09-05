@@ -66,7 +66,7 @@
     <section id="section-new-draft">
       <h1 class="font-display font-semibold text-5xl text-[#3D4A73] mb-4">New Draft</h1>
 
-      <div class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 items-start">
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_820px] gap-6 items-start">
       <div class="min-w-0">
 
       <div class="bg-[#3D4A73]/[0.08] border-2 border-[#3D4A73]/30 rounded-xl px-4 py-3 mb-3.5">
@@ -208,7 +208,8 @@
 
       </div>
 
-      <div class="lg:sticky lg:top-6">
+      <div class="lg:sticky lg:top-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+      <div>
         <div id="extracted-info-empty" class="bg-white border-2 border-dashed border-slate-400 rounded-xl p-5 text-center">
           <div class="text-slate-500 font-mono">⇧</div>
           <p class="text-lg text-slate-600 font-medium mt-1">Upload the RFI PDF above and this panel fills in automatically — topic, page count, due date, and what's still missing from your checklist.</p>
@@ -309,13 +310,15 @@
             <p class="text-lg text-slate-700"></p>
           </div>
         </div>
+      </div>
 
-        <div id="qa-guidance-empty" class="bg-white border-2 border-dashed border-slate-400 rounded-xl p-5 text-center mt-4">
+      <div>
+        <div id="qa-guidance-empty" class="bg-white border-2 border-dashed border-slate-400 rounded-xl p-5 text-center">
           <div class="text-slate-500 font-mono">?</div>
           <p class="text-lg text-slate-600 font-medium mt-1">Paste Q&amp;A answers into the checklist and this fills in automatically — question types, and any answers that read as binding guidance.</p>
         </div>
 
-        <div id="qa-guidance-panel" hidden class="bg-white border-2 border-[#3E5C7A] rounded-xl p-5 mt-4">
+        <div id="qa-guidance-panel" hidden class="bg-white border-2 border-[#3E5C7A] rounded-xl p-5">
           <div class="flex items-center gap-2 mb-1">
             <span class="text-[#3E5C7A]">✓</span>
             <span class="font-display font-semibold text-xl text-slate-900">Q&amp;A Guidance</span>
@@ -328,7 +331,12 @@
 
           <div id="qa-category-breakdown" class="flex flex-wrap gap-1.5 mb-4"></div>
 
-          <button type="button" id="qa-list-toggle" aria-expanded="false" aria-controls="qa-list-body" class="extract-collapse-toggle flex items-center gap-1.5 w-full text-left pt-3.5 border-t-2 border-slate-200">
+          <div id="qa-summary-wrap" class="mb-4 pb-4 border-b-2 border-slate-200">
+            <dt class="text-sm font-mono uppercase tracking-wide text-slate-500 mb-1.5">Summary</dt>
+            <dd id="qa-summary" class="text-lg text-slate-800 leading-relaxed"></dd>
+          </div>
+
+          <button type="button" id="qa-list-toggle" aria-expanded="false" aria-controls="qa-list-body" class="extract-collapse-toggle flex items-center gap-1.5 w-full text-left">
             <span class="chevron inline-block transition-transform text-slate-500">▾</span>
             <span class="text-sm font-mono uppercase tracking-wide text-slate-500">All questions — every one, none filtered out</span>
           </button>
@@ -336,6 +344,7 @@
         </div>
       </div>
 
+      </div>
       </div>
 
       <div class="flex items-center justify-between gap-3 flex-wrap mt-6 pt-5 border-t-2 border-slate-300">
@@ -1182,6 +1191,13 @@
     return GUIDANCE_SIGNALS.some(function(s){ return containsPhrase(answer, s); });
   }
 
+  function truncate(text, maxLen){
+    if (text.length <= maxLen) return text;
+    return text.slice(0, maxLen).trim() + '…';
+  }
+
+  var ANSWER_TRUNCATE_LEN = 110;
+
   function runQAGuidance(text){
     var pairs = parseQAPairs(text);
     document.getElementById('qa-guidance-empty').hidden = pairs.length > 0;
@@ -1207,9 +1223,26 @@
       breakdown.appendChild(span);
     });
 
+    // plain-language summary — built from the real counts and the real
+    // flagged answers above, not a separate/fabricated synthesis
+    var maxCount = Math.max.apply(null, Object.values(counts));
+    var topCategories = Object.keys(counts).filter(function(name){ return counts[name] === maxCount; });
+    var summary = pairs.length + (pairs.length === 1 ? ' question was' : ' questions were') +
+      ' asked, mostly about ' + topCategories.join(' and ') + '.';
+    var flagged = categorized.filter(function(c){ return isKeyGuidance(c.pair.answer); });
+    if (flagged.length) {
+      var snippets = flagged.map(function(c){ return '"' + truncate(c.pair.answer, 70) + '"'; });
+      summary += ' ' + flagged.length + (flagged.length === 1 ? ' answer reads as binding' : ' answers read as binding') +
+        ': ' + snippets.join('; ') + '.';
+    } else {
+      summary += ' None of the answers use clearly binding language ("shall", "must", "required") — read them individually for nuance.';
+    }
+    document.getElementById('qa-summary').textContent = summary;
+
     // every parsed question is shown — no subset is filtered out or
-    // hidden behind a "key" section. Binding-sounding answers just get
-    // an additional inline flag alongside their category tag.
+    // hidden behind a "key" section. Long answers are truncated with a
+    // per-item "View full answer" toggle so the list stays scannable,
+    // but nothing is left off the page — it's one click away, not gone.
     var listBody = document.getElementById('qa-list-body');
     listBody.innerHTML = '';
     categorized.forEach(function(c){
@@ -1228,8 +1261,25 @@
         badgeRow.appendChild(flag);
       }
       var qEl = document.createElement('div'); qEl.className = 'text-lg font-semibold text-slate-900 mt-1.5 mb-1'; qEl.textContent = c.pair.question;
-      var aEl = document.createElement('div'); aEl.className = 'text-lg text-slate-700'; aEl.textContent = c.pair.answer;
+      var aEl = document.createElement('div'); aEl.className = 'text-lg text-slate-700';
       div.append(badgeRow, qEl, aEl);
+
+      if (c.pair.answer.length > ANSWER_TRUNCATE_LEN) {
+        aEl.textContent = truncate(c.pair.answer, ANSWER_TRUNCATE_LEN);
+        var moreBtn = document.createElement('button');
+        moreBtn.type = 'button';
+        moreBtn.className = 'block mt-1.5 text-sm font-mono font-bold text-[#3E5C7A] underline underline-offset-2';
+        moreBtn.textContent = 'View full answer';
+        var expanded = false;
+        moreBtn.addEventListener('click', function(){
+          expanded = !expanded;
+          aEl.textContent = expanded ? c.pair.answer : truncate(c.pair.answer, ANSWER_TRUNCATE_LEN);
+          moreBtn.textContent = expanded ? 'Show less' : 'View full answer';
+        });
+        div.appendChild(moreBtn);
+      } else {
+        aEl.textContent = c.pair.answer;
+      }
       listBody.appendChild(div);
     });
   }
