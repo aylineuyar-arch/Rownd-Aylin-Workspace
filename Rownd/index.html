@@ -35,6 +35,10 @@
         data-active="bg-[#3D4A73] text-white border-[#3D4A73]"
         data-inactive="bg-[#3D4A73]/10 text-[#3D4A73] border-transparent hover:bg-[#3D4A73]/20"
         class="bg-[#3D4A73] text-white border-[#3D4A73] border-2 rounded-full px-6 py-3 font-semibold text-xl transition-colors">New Draft</button>
+      <button type="button" data-section="drafts"
+        data-active="bg-[#3E5C7A] text-white border-[#3E5C7A]"
+        data-inactive="bg-[#3E5C7A]/10 text-[#3E5C7A] border-transparent hover:bg-[#3E5C7A]/20"
+        class="bg-[#3E5C7A]/10 text-[#3E5C7A] border-transparent border-2 rounded-full px-6 py-3 font-semibold text-xl transition-colors">Drafts in Progress</button>
       <button type="button" data-section="new-rfis"
         data-active="bg-[#2E615F] text-white border-[#2E615F]"
         data-inactive="bg-[#2E615F]/10 text-[#2E615F] border-transparent hover:bg-[#2E615F]/20"
@@ -64,12 +68,16 @@
       <div class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 items-start">
       <div class="min-w-0">
 
-      <div class="flex justify-between items-center gap-3 flex-wrap bg-[#3D4A73]/[0.08] border-2 border-[#3D4A73]/30 rounded-xl px-4 py-3 mb-3.5">
-        <div>
-          <div class="font-semibold text-slate-900" id="topic-title-el">Automated Lethality</div>
-          <div class="font-mono text-lg text-slate-600" id="topic-code-el">DAF26BZ05-NV026 · 26.BZ · USAF/AFMC</div>
+      <div class="bg-[#3D4A73]/[0.08] border-2 border-[#3D4A73]/30 rounded-xl px-4 py-3 mb-3.5">
+        <div class="flex justify-between items-center gap-3 flex-wrap mb-2.5">
+          <div>
+            <div class="font-semibold text-slate-900" id="topic-title-el">Automated Lethality</div>
+            <div class="font-mono text-lg text-slate-600" id="topic-code-el">DAF26BZ05-NV026 · 26.BZ · USAF/AFMC</div>
+          </div>
+          <button type="button" data-section="new-rfis" class="nav-jump bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors">Change topic</button>
         </div>
-        <button type="button" data-section="new-rfis" class="nav-jump bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors">Change topic</button>
+        <label for="proposal-name" class="block text-sm font-mono uppercase tracking-wide text-slate-500 mb-1">Proposal name (used when you save)</label>
+        <input type="text" id="proposal-name" placeholder="e.g. Aegis Dynamics" class="w-full bg-white border-2 border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-lg placeholder:text-slate-400">
       </div>
 
       <div class="upload-zone border-2 border-dashed border-[#3D4A73]/40 hover:border-[#3D4A73]/60 rounded-xl bg-[#3D4A73]/[0.05] px-4 py-3 mb-4 cursor-pointer transition-colors" data-upload="nd">
@@ -239,6 +247,46 @@
         </div>
       </div>
 
+      </div>
+
+      <div class="flex items-center justify-between gap-3 flex-wrap mt-6 pt-5 border-t-2 border-slate-300">
+        <span id="save-draft-confirm" class="text-lg font-semibold text-[#3E5C7A]" hidden>✓ Saved to Drafts in Progress</span>
+        <button type="button" id="save-draft-btn" class="bg-white hover:border-[#3E5C7A] border-2 border-slate-400 text-slate-800 font-semibold text-xl px-5 py-2.5 rounded-lg transition-colors ml-auto">Save Draft</button>
+      </div>
+    </section>
+
+    <!-- ========== DRAFTS IN PROGRESS ========== -->
+    <section id="section-drafts" hidden>
+      <h1 class="font-display font-semibold text-5xl text-[#3E5C7A] mb-4">Drafts in Progress</h1>
+      <p class="text-lg text-slate-600 mb-3.5">Pick up where you left off — resume any of these to reload its topic into New Draft.</p>
+
+      <div class="bg-white border-2 border-slate-300 rounded-xl p-4">
+        <div id="drafts-in-progress-list" class="flex flex-col">
+          <div class="draft-progress-row flex items-center gap-3.5 py-3 border-b-2 border-slate-300">
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-xl text-slate-900">Aegis Dynamics — F-35 Agnostic Rapid Weapons Integration</div>
+              <div class="text-lg text-slate-600 mt-0.5">Saved 2 hours ago</div>
+            </div>
+            <span class="font-mono text-sm font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">2 / 4</span>
+            <button type="button" class="resume-draft-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors" data-topic="F-35 Agnostic Rapid Weapons Integration" data-code="DAF26BZ05-DV032">Resume</button>
+          </div>
+          <div class="draft-progress-row flex items-center gap-3.5 py-3 border-b-2 border-slate-300">
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-xl text-slate-900">Nova Defense — Dynamic Open Systems Enclave</div>
+              <div class="text-lg text-slate-600 mt-0.5">Saved yesterday</div>
+            </div>
+            <span class="font-mono text-sm font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">1 / 4</span>
+            <button type="button" class="resume-draft-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors" data-topic="Dynamic Open Systems Enclave" data-code="DAF26BZ05-DV033">Resume</button>
+          </div>
+          <div class="draft-progress-row flex items-center gap-3.5 py-3">
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-xl text-slate-900">Meridian Systems — Ultra-Sensitive Quantum Telemetry Receiver</div>
+              <div class="text-lg text-slate-600 mt-0.5">Saved 3 days ago</div>
+            </div>
+            <span class="font-mono text-sm font-bold px-2.5 py-1 rounded-full bg-[#3E5C7A] text-white">4 / 4</span>
+            <button type="button" class="resume-draft-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors" data-topic="Ultra-Sensitive Quantum Telemetry Receiver" data-code="DAF26BZ05-NV028">Resume</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -722,6 +770,58 @@
     document.getElementById('extracted-info-empty').hidden = false;
     document.getElementById('extracted-info-panel').hidden = true;
   }
+
+  // resume a saved draft: reload its topic into New Draft
+  document.querySelectorAll('.resume-draft-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.getElementById('topic-title-el').textContent = btn.dataset.topic;
+      document.getElementById('topic-code-el').textContent = btn.dataset.code + ' · 26.BZ · USAF/AFMC';
+      document.getElementById('draft-panel').hidden = true;
+      showSection('new-draft');
+    });
+  });
+
+  // save draft: snapshot current topic + proposal name + checklist progress
+  // into a new row at the top of Drafts in Progress
+  document.getElementById('save-draft-btn').addEventListener('click', function(){
+    var proposalName = document.getElementById('proposal-name').value.trim() || 'Untitled Proposal';
+    var topic = document.getElementById('topic-title-el').textContent;
+    var code = document.getElementById('topic-code-el').textContent.split(' · ')[0];
+    var progress = document.getElementById('checklist-progress').textContent;
+    var progressParts = progress.split(' / ');
+    var progressDone = progressParts[0] === progressParts[1];
+
+    var row = document.createElement('div');
+    row.className = 'draft-progress-row flex items-center gap-3.5 py-3 border-b-2 border-slate-300';
+    row.innerHTML =
+      '<div class="flex-1 min-w-0">' +
+        '<div class="font-semibold text-xl text-slate-900"></div>' +
+        '<div class="text-lg text-slate-600 mt-0.5">Saved just now</div>' +
+      '</div>' +
+      '<span class="font-mono text-sm font-bold px-2.5 py-1 rounded-full"></span>' +
+      '<button type="button" class="resume-draft-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors">Resume</button>';
+    row.querySelector('.font-semibold').textContent = proposalName + ' — ' + topic;
+    var badge = row.querySelector('span');
+    badge.textContent = progress;
+    badge.className += progressDone ? ' bg-[#3E5C7A] text-white' : ' bg-slate-100 text-slate-600';
+    var resumeBtn = row.querySelector('.resume-draft-btn');
+    resumeBtn.dataset.topic = topic;
+    resumeBtn.dataset.code = code;
+    resumeBtn.addEventListener('click', function(){
+      document.getElementById('topic-title-el').textContent = resumeBtn.dataset.topic;
+      document.getElementById('topic-code-el').textContent = resumeBtn.dataset.code + ' · 26.BZ · USAF/AFMC';
+      document.getElementById('draft-panel').hidden = true;
+      showSection('new-draft');
+    });
+
+    var list = document.getElementById('drafts-in-progress-list');
+    list.insertBefore(row, list.firstChild);
+
+    var confirm = document.getElementById('save-draft-confirm');
+    confirm.hidden = false;
+    clearTimeout(confirm._hideTimer);
+    confirm._hideTimer = setTimeout(function(){ confirm.hidden = true; }, 2500);
+  });
 
   // improve-selection enablement
   document.addEventListener('selectionchange', function(){
