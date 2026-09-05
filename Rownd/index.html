@@ -22,35 +22,35 @@
      gold #8A6A1E = proven-phrasing / memory · sage #3F6647 = won · rust #A34A34 = lost */
 </style>
 
-<div class="bg-slate-100 text-slate-900 font-sans text-base leading-relaxed min-h-screen">
+<div class="bg-slate-100 text-slate-900 font-sans text-lg leading-relaxed min-h-screen">
 
-  <div class="text-center text-base text-slate-500 font-mono py-1.5 border-b-2 border-slate-300 bg-white">
+  <div class="text-center text-lg text-slate-500 font-mono py-1.5 border-b-2 border-slate-300 bg-white">
     UI mockup — static preview, not wired to any API
   </div>
 
-  <header class="flex items-center gap-5 flex-wrap px-6 py-3 border-b-2 border-slate-300 bg-white">
-    <div class="font-display font-semibold text-xl text-slate-900">Draft Console</div>
+  <header class="flex items-center gap-6 flex-wrap px-8 py-6 border-b-2 border-slate-300 bg-white">
+    <div class="font-display font-semibold text-3xl text-slate-900">Draft Console</div>
     <nav class="flex gap-2 flex-wrap" aria-label="Sections">
       <button type="button" data-section="new-draft"
         data-active="bg-[#3D4A73] text-white border-[#3D4A73]"
         data-inactive="bg-[#3D4A73]/10 text-[#3D4A73] border-transparent hover:bg-[#3D4A73]/20"
-        class="bg-[#3D4A73] text-white border-[#3D4A73] border-2 rounded-full px-4 py-1.5 font-semibold text-base transition-colors">New Draft</button>
+        class="bg-[#3D4A73] text-white border-[#3D4A73] border-2 rounded-full px-6 py-3 font-semibold text-xl transition-colors">New Draft</button>
       <button type="button" data-section="new-rfis"
         data-active="bg-[#2E615F] text-white border-[#2E615F]"
         data-inactive="bg-[#2E615F]/10 text-[#2E615F] border-transparent hover:bg-[#2E615F]/20"
-        class="bg-[#2E615F]/10 text-[#2E615F] border-transparent border-2 rounded-full px-4 py-1.5 font-semibold text-base transition-colors">New RFIs</button>
+        class="bg-[#2E615F]/10 text-[#2E615F] border-transparent border-2 rounded-full px-6 py-3 font-semibold text-xl transition-colors">New RFIs</button>
       <button type="button" data-section="historic"
         data-active="bg-[#3F6647] text-white border-[#3F6647]"
         data-inactive="bg-[#3F6647]/10 text-[#3F6647] border-transparent hover:bg-[#3F6647]/20"
-        class="bg-[#3F6647]/10 text-[#3F6647] border-transparent border-2 rounded-full px-4 py-1.5 font-semibold text-base transition-colors">Historic Submissions</button>
+        class="bg-[#3F6647]/10 text-[#3F6647] border-transparent border-2 rounded-full px-6 py-3 font-semibold text-xl transition-colors">Historic Submissions</button>
       <button type="button" data-section="reference"
         data-active="bg-[#7A5C3E] text-white border-[#7A5C3E]"
         data-inactive="bg-[#7A5C3E]/10 text-[#7A5C3E] border-transparent hover:bg-[#7A5C3E]/20"
-        class="bg-[#7A5C3E]/10 text-[#7A5C3E] border-transparent border-2 rounded-full px-4 py-1.5 font-semibold text-base transition-colors">Reference Documents</button>
+        class="bg-[#7A5C3E]/10 text-[#7A5C3E] border-transparent border-2 rounded-full px-6 py-3 font-semibold text-xl transition-colors">Reference Documents</button>
       <button type="button" data-section="architecture"
         data-active="bg-[#6B3F73] text-white border-[#6B3F73]"
         data-inactive="bg-[#6B3F73]/10 text-[#6B3F73] border-transparent hover:bg-[#6B3F73]/20"
-        class="bg-[#6B3F73]/10 text-[#6B3F73] border-transparent border-2 rounded-full px-4 py-1.5 font-semibold text-base transition-colors">Architecture</button>
+        class="bg-[#6B3F73]/10 text-[#6B3F73] border-transparent border-2 rounded-full px-6 py-3 font-semibold text-xl transition-colors">Architecture</button>
     </nav>
   </header>
 
@@ -59,89 +59,89 @@
 
     <!-- ========== NEW DRAFT ========== -->
     <section id="section-new-draft">
-      <h1 class="font-display font-semibold text-4xl text-[#3D4A73] mb-4">New Draft</h1>
+      <h1 class="font-display font-semibold text-5xl text-[#3D4A73] mb-4">New Draft</h1>
 
       <div class="flex justify-between items-center gap-3 flex-wrap bg-[#3D4A73]/[0.08] border-2 border-[#3D4A73]/30 rounded-xl px-4 py-3 mb-3.5">
         <div>
           <div class="font-semibold text-slate-900" id="topic-title-el">Automated Lethality</div>
-          <div class="font-mono text-base text-slate-600" id="topic-code-el">DAF26BZ05-NV026 · 26.BZ · USAF/AFMC</div>
+          <div class="font-mono text-lg text-slate-600" id="topic-code-el">DAF26BZ05-NV026 · 26.BZ · USAF/AFMC</div>
         </div>
-        <button type="button" data-section="new-rfis" class="nav-jump bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-base font-semibold px-3 py-1.5 rounded-lg transition-colors">Change topic</button>
+        <button type="button" data-section="new-rfis" class="nav-jump bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors">Change topic</button>
       </div>
 
       <div class="upload-zone border-2 border-dashed border-[#3D4A73]/40 hover:border-[#3D4A73]/60 rounded-xl bg-[#3D4A73]/[0.05] px-4 py-3 mb-4 cursor-pointer transition-colors" data-upload="nd">
         <input type="file" id="file-nd" multiple hidden>
         <div class="flex items-center gap-3 flex-wrap">
           <span class="text-[#3D4A73]">⇧</span>
-          <span class="text-base"><strong class="font-semibold text-slate-800">Drop reference files</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#3D4A73] font-bold underline decoration-2 underline-offset-2">browse</button></span>
-          <span class="text-base text-slate-600 ml-auto">figures, specs, past-performance docs</span>
+          <span class="text-lg"><strong class="font-semibold text-slate-800">Drop reference files</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#3D4A73] font-bold underline decoration-2 underline-offset-2">browse</button></span>
+          <span class="text-lg text-slate-600 ml-auto">figures, specs, past-performance docs</span>
         </div>
         <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-nd"></ul>
       </div>
 
       <div class="bg-white border-2 border-slate-300 rounded-xl p-4 mb-4">
         <div class="flex items-center justify-between mb-3 pb-3 border-b-2 border-slate-300">
-          <span class="font-display font-semibold text-xl text-slate-900">Draft Checklist</span>
+          <span class="font-display font-semibold text-2xl text-slate-900">Draft Checklist</span>
           <span id="checklist-progress" class="font-mono text-sm px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">0 / 4</span>
         </div>
         <div class="grid gap-4">
           <div class="checklist-item">
             <div class="flex items-center gap-2 mb-1.5">
-              <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-base font-bold transition-colors">✓</span>
-              <label class="font-semibold text-lg text-slate-900" for="checklist-rfi-details">RFI details</label>
+              <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-lg font-bold transition-colors">✓</span>
+              <label class="font-semibold text-xl text-slate-900" for="checklist-rfi-details">RFI details</label>
             </div>
             <div class="upload-zone border-2 border-dashed border-[#3D4A73]/40 hover:border-[#3D4A73]/60 rounded-lg bg-[#3D4A73]/[0.04] px-3 py-2 mb-2 ml-8 cursor-pointer transition-colors" data-upload="checklist-rfi">
               <input type="file" id="file-checklist-rfi" multiple hidden>
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-[#3D4A73] text-base">⇧</span>
-                <span class="text-base"><strong class="font-semibold text-slate-800">Upload a file</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#3D4A73] font-bold underline decoration-2 underline-offset-2 text-base">browse</button></span>
+                <span class="text-[#3D4A73] text-lg">⇧</span>
+                <span class="text-lg"><strong class="font-semibold text-slate-800">Upload a file</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#3D4A73] font-bold underline decoration-2 underline-offset-2 text-lg">browse</button></span>
               </div>
               <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-checklist-rfi"></ul>
             </div>
-            <textarea id="checklist-rfi-details" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-lg placeholder:text-slate-400" placeholder="…or paste the full RFI / topic details here"></textarea>
+            <textarea id="checklist-rfi-details" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="…or paste the full RFI / topic details here"></textarea>
           </div>
           <div class="checklist-item">
             <div class="flex items-center gap-2 mb-1.5">
-              <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-base font-bold transition-colors">✓</span>
-              <label class="font-semibold text-lg text-slate-900" for="checklist-instructions">Solicitation instructions</label>
+              <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-lg font-bold transition-colors">✓</span>
+              <label class="font-semibold text-xl text-slate-900" for="checklist-instructions">Solicitation instructions</label>
             </div>
-            <textarea id="checklist-instructions" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-lg placeholder:text-slate-400" placeholder="Paste the solicitation instructions here…"></textarea>
+            <textarea id="checklist-instructions" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="Paste the solicitation instructions here…"></textarea>
           </div>
           <div class="checklist-item">
             <div class="flex items-center gap-2 mb-1.5">
-              <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-base font-bold transition-colors">✓</span>
-              <label class="font-semibold text-lg text-slate-900" for="checklist-rules">Rules and component list</label>
+              <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-lg font-bold transition-colors">✓</span>
+              <label class="font-semibold text-xl text-slate-900" for="checklist-rules">Rules and component list</label>
             </div>
-            <textarea id="checklist-rules" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-lg placeholder:text-slate-400" placeholder="Paste the rules and component list here…"></textarea>
+            <textarea id="checklist-rules" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="Paste the rules and component list here…"></textarea>
           </div>
           <div class="checklist-item">
             <div class="flex items-center gap-2 mb-1.5">
-              <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-base font-bold transition-colors">✓</span>
-              <label class="font-semibold text-lg text-slate-900" for="checklist-qa">Q&amp;A answers</label>
+              <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-lg font-bold transition-colors">✓</span>
+              <label class="font-semibold text-xl text-slate-900" for="checklist-qa">Q&amp;A answers</label>
             </div>
-            <textarea id="checklist-qa" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-lg placeholder:text-slate-400" placeholder="Paste the Q&amp;A answers here…"></textarea>
+            <textarea id="checklist-qa" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="Paste the Q&amp;A answers here…"></textarea>
           </div>
         </div>
       </div>
 
       <div class="flex items-center gap-2.5 mb-4">
-        <span class="text-base text-slate-600 font-medium">Generate with</span>
+        <span class="text-lg text-slate-600 font-medium">Generate with</span>
         <div class="inline-flex bg-white border-2 border-slate-300 rounded-lg p-0.5 gap-0.5" role="group" aria-label="Model">
-          <button type="button" data-model="fable" aria-pressed="false" class="model-btn px-3 py-1.5 rounded-md text-slate-600 font-semibold text-base transition-colors">Claude Fable</button>
-          <button type="button" data-model="gemini" aria-pressed="false" class="model-btn px-3 py-1.5 rounded-md text-slate-600 font-semibold text-base transition-colors">Gemini</button>
-          <button type="button" data-model="both" aria-pressed="true" class="model-btn px-3 py-1.5 rounded-md bg-slate-800 text-white font-semibold text-base transition-colors">Both</button>
+          <button type="button" data-model="fable" aria-pressed="false" class="model-btn px-3 py-1.5 rounded-md text-slate-600 font-semibold text-lg transition-colors">Claude Fable</button>
+          <button type="button" data-model="gemini" aria-pressed="false" class="model-btn px-3 py-1.5 rounded-md text-slate-600 font-semibold text-lg transition-colors">Gemini</button>
+          <button type="button" data-model="both" aria-pressed="true" class="model-btn px-3 py-1.5 rounded-md bg-slate-800 text-white font-semibold text-lg transition-colors">Both</button>
         </div>
-        <button type="button" id="generate-draft-btn" class="bg-[#3D4A73] hover:bg-[#2E3A5F] text-white font-semibold text-base px-4 py-2 rounded-lg transition-colors ml-auto">Generate Draft</button>
+        <button type="button" id="generate-draft-btn" class="bg-[#3D4A73] hover:bg-[#2E3A5F] text-white font-semibold text-lg px-4 py-2 rounded-lg transition-colors ml-auto">Generate Draft</button>
       </div>
 
       <div id="draft-panel" hidden class="bg-white border-2 border-slate-300 rounded-xl p-4">
         <div class="draft-tabs flex gap-1 mb-3 pb-3 border-b-2 border-slate-300" id="draft-tabs">
-          <button type="button" data-tab="fable" aria-selected="true" class="border-2 border-[#3D4A73] text-white bg-[#3D4A73] text-base font-semibold px-3 py-1.5 rounded-md transition-colors">Fable draft</button>
-          <button type="button" data-tab="gemini" aria-selected="false" class="border-2 border-slate-300 text-slate-600 bg-white text-base font-semibold px-3 py-1.5 rounded-md transition-colors">Gemini draft</button>
+          <button type="button" data-tab="fable" aria-selected="true" class="border-2 border-[#3D4A73] text-white bg-[#3D4A73] text-lg font-semibold px-3 py-1.5 rounded-md transition-colors">Fable draft</button>
+          <button type="button" data-tab="gemini" aria-selected="false" class="border-2 border-slate-300 text-slate-600 bg-white text-lg font-semibold px-3 py-1.5 rounded-md transition-colors">Gemini draft</button>
         </div>
 
         <div class="flex justify-between items-baseline mb-2 pb-2 border-b-2 border-slate-300">
-          <span class="font-display font-semibold text-xl text-slate-900">Technical Approach</span>
+          <span class="font-display font-semibold text-2xl text-slate-900">Technical Approach</span>
           <span id="model-badge" class="font-mono text-sm px-2 py-0.5 rounded-full bg-[#3D4A73] text-white">Claude Fable</span>
         </div>
 
@@ -151,44 +151,44 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5 mt-3.5 pt-3.5 border-t-2 border-slate-300">
-          <button type="button" id="regen-btn" class="bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-base font-semibold px-3.5 py-2 rounded-lg transition-colors">Regenerate</button>
-          <button type="button" id="improve-btn" disabled class="bg-white border-2 border-slate-400 text-slate-800 text-base font-semibold px-3.5 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">Improve selection</button>
-          <button type="button" disabled class="bg-white border-2 border-dashed border-slate-400 text-slate-500 text-base font-semibold px-3.5 py-2 rounded-lg cursor-not-allowed">+ Comments <span class="font-normal text-slate-400">(tentative)</span></button>
+          <button type="button" id="regen-btn" class="bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors">Regenerate</button>
+          <button type="button" id="improve-btn" disabled class="bg-white border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">Improve selection</button>
+          <button type="button" disabled class="bg-white border-2 border-dashed border-slate-400 text-slate-500 text-lg font-semibold px-3.5 py-2 rounded-lg cursor-not-allowed">+ Comments <span class="font-normal text-slate-400">(tentative)</span></button>
           <div class="relative ml-auto">
-            <button type="button" id="export-btn" class="bg-[#3D4A73] hover:bg-[#2E3A5F] text-white font-semibold text-base px-3.5 py-2 rounded-lg transition-colors">Export as ▾</button>
+            <button type="button" id="export-btn" class="bg-[#3D4A73] hover:bg-[#2E3A5F] text-white font-semibold text-lg px-3.5 py-2 rounded-lg transition-colors">Export as ▾</button>
             <div id="export-menu" hidden class="absolute right-0 top-[calc(100%+6px)] bg-white border-2 border-slate-300 rounded-lg shadow-lg p-1.5 min-w-[170px] z-10">
-              <button type="button" class="block w-full text-left px-2.5 py-2 rounded-md hover:bg-slate-100 text-base text-slate-800 font-medium">Word (.docx)</button>
-              <button type="button" class="block w-full text-left px-2.5 py-2 rounded-md hover:bg-slate-100 text-base text-slate-800 font-medium">Google Doc</button>
+              <button type="button" class="block w-full text-left px-2.5 py-2 rounded-md hover:bg-slate-100 text-lg text-slate-800 font-medium">Word (.docx)</button>
+              <button type="button" class="block w-full text-left px-2.5 py-2 rounded-md hover:bg-slate-100 text-lg text-slate-800 font-medium">Google Doc</button>
             </div>
           </div>
         </div>
 
-        <button type="button" id="insights-toggle" aria-expanded="false" aria-controls="insights-body" class="flex items-center gap-1.5 mt-4 text-slate-600 hover:text-slate-900 text-base font-semibold">
+        <button type="button" id="insights-toggle" aria-expanded="false" aria-controls="insights-body" class="flex items-center gap-1.5 mt-4 text-slate-600 hover:text-slate-900 text-lg font-semibold">
           <span class="chevron inline-block transition-transform">▾</span> Trend insights for this topic
         </button>
         <div id="insights-body" hidden class="mt-3">
           <div class="grid grid-cols-2 gap-2.5 mb-3.5">
             <div class="bg-[#3D4A73]/[0.08] border-2 border-[#3D4A73]/25 rounded-lg p-3">
-              <div class="font-mono tabular-nums text-xl font-bold text-[#3D4A73]">34%</div>
+              <div class="font-mono tabular-nums text-2xl font-bold text-[#3D4A73]">34%</div>
               <div class="text-sm text-slate-600 mt-0.5 font-medium">win rate · 38 of 112 tagged</div>
             </div>
             <div class="bg-slate-100 border-2 border-slate-300 rounded-lg p-3">
-              <div class="font-mono tabular-nums text-xl font-bold text-slate-900">128</div>
+              <div class="font-mono tabular-nums text-2xl font-bold text-slate-900">128</div>
               <div class="text-sm text-slate-600 mt-0.5 font-medium">drafts in memory</div>
             </div>
           </div>
           <div class="flex flex-col gap-2">
             <div class="flex justify-between items-center gap-2 px-2.5 py-2 bg-[#8A6A1E]/15 border-2 border-[#8A6A1E]/30 rounded-lg">
-              <span class="text-base text-slate-800 italic font-medium">"modular, open-systems architecture"</span>
-              <span class="font-mono text-base text-[#8A6A1E] font-bold whitespace-nowrap">4 wins</span>
+              <span class="text-lg text-slate-800 italic font-medium">"modular, open-systems architecture"</span>
+              <span class="font-mono text-lg text-[#8A6A1E] font-bold whitespace-nowrap">4 wins</span>
             </div>
             <div class="flex justify-between items-center gap-2 px-2.5 py-2 bg-[#8A6A1E]/15 border-2 border-[#8A6A1E]/30 rounded-lg">
-              <span class="text-base text-slate-800 italic font-medium">"sensor-agnostic engagement pipeline"</span>
-              <span class="font-mono text-base text-[#8A6A1E] font-bold whitespace-nowrap">3 wins</span>
+              <span class="text-lg text-slate-800 italic font-medium">"sensor-agnostic engagement pipeline"</span>
+              <span class="font-mono text-lg text-[#8A6A1E] font-bold whitespace-nowrap">3 wins</span>
             </div>
             <div class="flex justify-between items-center gap-2 px-2.5 py-2 bg-[#8A6A1E]/15 border-2 border-[#8A6A1E]/30 rounded-lg">
-              <span class="text-base text-slate-800 italic font-medium">"WOSA-compliant embedded stack"</span>
-              <span class="font-mono text-base text-[#8A6A1E] font-bold whitespace-nowrap">3 wins</span>
+              <span class="text-lg text-slate-800 italic font-medium">"WOSA-compliant embedded stack"</span>
+              <span class="font-mono text-lg text-[#8A6A1E] font-bold whitespace-nowrap">3 wins</span>
             </div>
           </div>
         </div>
@@ -197,14 +197,14 @@
 
     <!-- ========== HISTORIC SUBMISSIONS ========== -->
     <section id="section-historic" hidden>
-      <h1 class="font-display font-semibold text-4xl text-[#3F6647] mb-4">Historic Submissions</h1>
+      <h1 class="font-display font-semibold text-5xl text-[#3F6647] mb-4">Historic Submissions</h1>
 
       <div class="upload-zone border-2 border-dashed border-[#3F6647]/40 hover:border-[#3F6647]/60 rounded-xl bg-[#3F6647]/[0.05] px-4 py-3 mb-4 cursor-pointer transition-colors" data-upload="hs">
         <input type="file" id="file-hs" multiple hidden>
         <div class="flex items-center gap-3 flex-wrap">
           <span class="text-[#3F6647]">⇧</span>
-          <span class="text-base"><strong class="font-semibold text-slate-800">Attach submitted files</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#3F6647] font-bold underline decoration-2 underline-offset-2">browse</button></span>
-          <span class="text-base text-slate-600 ml-auto">final proposal, award/rejection letters</span>
+          <span class="text-lg"><strong class="font-semibold text-slate-800">Attach submitted files</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#3F6647] font-bold underline decoration-2 underline-offset-2">browse</button></span>
+          <span class="text-lg text-slate-600 ml-auto">final proposal, award/rejection letters</span>
         </div>
         <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-hs"></ul>
       </div>
@@ -213,43 +213,43 @@
         <div class="flex flex-col">
           <div class="flex items-center gap-3.5 py-3 border-b-2 border-slate-300">
             <div class="flex-1 min-w-0">
-              <div class="font-semibold text-lg text-slate-900">Aegis Dynamics — Precision Fires ISR</div>
-              <div class="text-base text-slate-600 mt-0.5">Submitted 2026-06-02</div>
+              <div class="font-semibold text-xl text-slate-900">Aegis Dynamics — Precision Fires ISR</div>
+              <div class="text-lg text-slate-600 mt-0.5">Submitted 2026-06-02</div>
             </div>
-            <span class="font-mono text-base font-bold px-2.5 py-1 rounded-full bg-[#3F6647] text-white">Won</span>
+            <span class="font-mono text-lg font-bold px-2.5 py-1 rounded-full bg-[#3F6647] text-white">Won</span>
           </div>
           <div class="flex items-center gap-3.5 py-3 border-b-2 border-slate-300">
             <div class="flex-1 min-w-0">
-              <div class="font-semibold text-lg text-slate-900">Nova Defense — Autonomous Target ID</div>
-              <div class="text-base text-slate-600 mt-0.5">Submitted 2026-05-14</div>
+              <div class="font-semibold text-xl text-slate-900">Nova Defense — Autonomous Target ID</div>
+              <div class="text-lg text-slate-600 mt-0.5">Submitted 2026-05-14</div>
             </div>
-            <span class="font-mono text-base font-bold px-2.5 py-1 rounded-full bg-[#A34A34] text-white">Lost</span>
+            <span class="font-mono text-lg font-bold px-2.5 py-1 rounded-full bg-[#A34A34] text-white">Lost</span>
           </div>
           <div class="flex items-center gap-3.5 py-3 border-b-2 border-slate-300">
             <div class="flex-1 min-w-0">
-              <div class="font-semibold text-lg text-slate-900">Halcyon Systems — Swarm C2</div>
-              <div class="text-base text-slate-600 mt-0.5">Submitted 3 days ago · tag the outcome</div>
+              <div class="font-semibold text-xl text-slate-900">Halcyon Systems — Swarm C2</div>
+              <div class="text-lg text-slate-600 mt-0.5">Submitted 3 days ago · tag the outcome</div>
             </div>
             <div class="flex gap-1.5 outcome-buttons" role="group" aria-label="Outcome for Halcyon Systems">
-              <button type="button" data-tag="won" aria-pressed="false" class="tag-btn border-2 border-slate-400 bg-white text-slate-700 rounded-md px-2.5 py-1.5 text-base font-semibold transition-colors">Won</button>
-              <button type="button" data-tag="lost" aria-pressed="false" class="tag-btn border-2 border-slate-400 bg-white text-slate-700 rounded-md px-2.5 py-1.5 text-base font-semibold transition-colors">Lost</button>
+              <button type="button" data-tag="won" aria-pressed="false" class="tag-btn border-2 border-slate-400 bg-white text-slate-700 rounded-md px-2.5 py-1.5 text-lg font-semibold transition-colors">Won</button>
+              <button type="button" data-tag="lost" aria-pressed="false" class="tag-btn border-2 border-slate-400 bg-white text-slate-700 rounded-md px-2.5 py-1.5 text-lg font-semibold transition-colors">Lost</button>
             </div>
           </div>
           <div class="flex items-center gap-3.5 py-3 border-b-2 border-slate-300">
             <div class="flex-1 min-w-0">
-              <div class="font-semibold text-lg text-slate-900">Ferrum Robotics — Embedded Lethality Stack</div>
-              <div class="text-base text-slate-600 mt-0.5">Submitted 2026-04-22</div>
+              <div class="font-semibold text-xl text-slate-900">Ferrum Robotics — Embedded Lethality Stack</div>
+              <div class="text-lg text-slate-600 mt-0.5">Submitted 2026-04-22</div>
             </div>
-            <span class="font-mono text-base font-bold px-2.5 py-1 rounded-full bg-[#3F6647] text-white">Won</span>
+            <span class="font-mono text-lg font-bold px-2.5 py-1 rounded-full bg-[#3F6647] text-white">Won</span>
           </div>
           <div class="flex items-center gap-3.5 py-3">
             <div class="flex-1 min-w-0">
-              <div class="font-semibold text-lg text-slate-900">Meridian Systems — Quantum Telemetry Receiver</div>
-              <div class="text-base text-slate-600 mt-0.5">Submitted 5 days ago · tag the outcome</div>
+              <div class="font-semibold text-xl text-slate-900">Meridian Systems — Quantum Telemetry Receiver</div>
+              <div class="text-lg text-slate-600 mt-0.5">Submitted 5 days ago · tag the outcome</div>
             </div>
             <div class="flex gap-1.5 outcome-buttons" role="group" aria-label="Outcome for Meridian Systems">
-              <button type="button" data-tag="won" aria-pressed="false" class="tag-btn border-2 border-slate-400 bg-white text-slate-700 rounded-md px-2.5 py-1.5 text-base font-semibold transition-colors">Won</button>
-              <button type="button" data-tag="lost" aria-pressed="false" class="tag-btn border-2 border-slate-400 bg-white text-slate-700 rounded-md px-2.5 py-1.5 text-base font-semibold transition-colors">Lost</button>
+              <button type="button" data-tag="won" aria-pressed="false" class="tag-btn border-2 border-slate-400 bg-white text-slate-700 rounded-md px-2.5 py-1.5 text-lg font-semibold transition-colors">Won</button>
+              <button type="button" data-tag="lost" aria-pressed="false" class="tag-btn border-2 border-slate-400 bg-white text-slate-700 rounded-md px-2.5 py-1.5 text-lg font-semibold transition-colors">Lost</button>
             </div>
           </div>
         </div>
@@ -258,19 +258,19 @@
 
     <!-- ========== NEW RFIS ========== -->
     <section id="section-new-rfis" hidden>
-      <h1 class="font-display font-semibold text-4xl text-[#2E615F] mb-4">New RFIs</h1>
+      <h1 class="font-display font-semibold text-5xl text-[#2E615F] mb-4">New RFIs</h1>
 
       <div class="inline-flex bg-white border-2 border-slate-300 rounded-full p-0.5 gap-0.5" role="group" aria-label="Topic source">
-        <button type="button" data-source="manual" aria-pressed="false" class="source-btn px-3 py-1.5 rounded-full text-slate-600 font-semibold text-base transition-colors">Manual</button>
-        <button type="button" data-source="feed" aria-pressed="true" class="source-btn px-3 py-1.5 rounded-full bg-[#2E615F] text-white font-semibold text-base transition-colors">SBIR/STTR feed</button>
+        <button type="button" data-source="manual" aria-pressed="false" class="source-btn px-3 py-1.5 rounded-full text-slate-600 font-semibold text-lg transition-colors">Manual</button>
+        <button type="button" data-source="feed" aria-pressed="true" class="source-btn px-3 py-1.5 rounded-full bg-[#2E615F] text-white font-semibold text-lg transition-colors">SBIR/STTR feed</button>
       </div>
 
       <div class="upload-zone border-2 border-dashed border-[#2E615F]/40 hover:border-[#2E615F]/60 rounded-xl bg-[#2E615F]/[0.06] px-4 py-3 mt-3.5 mb-4 cursor-pointer transition-colors" data-upload="rfi">
         <input type="file" id="file-rfi" multiple hidden>
         <div class="flex items-center gap-3 flex-wrap">
           <span class="text-[#2E615F]">⇧</span>
-          <span class="text-base"><strong class="font-semibold text-slate-800">Attach RFI documents</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#2E615F] font-bold underline decoration-2 underline-offset-2">browse</button></span>
-          <span class="text-base text-slate-600 ml-auto">solicitation PDF, amendments, Q&amp;A</span>
+          <span class="text-lg"><strong class="font-semibold text-slate-800">Attach RFI documents</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#2E615F] font-bold underline decoration-2 underline-offset-2">browse</button></span>
+          <span class="text-lg text-slate-600 ml-auto">solicitation PDF, amendments, Q&amp;A</span>
         </div>
         <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-rfi"></ul>
       </div>
@@ -278,48 +278,48 @@
       <div id="source-manual" hidden class="bg-white border-2 border-slate-300 rounded-xl p-4">
         <div class="grid sm:grid-cols-2 gap-3 mb-3">
           <div>
-            <label for="manual-topic-title" class="block text-base font-semibold text-slate-700 mb-1">Title</label>
-            <input type="text" id="manual-topic-title" placeholder="e.g. Automated Lethality" class="w-full bg-slate-50 border-2 border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-lg placeholder:text-slate-400">
+            <label for="manual-topic-title" class="block text-lg font-semibold text-slate-700 mb-1">Title</label>
+            <input type="text" id="manual-topic-title" placeholder="e.g. Automated Lethality" class="w-full bg-slate-50 border-2 border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-xl placeholder:text-slate-400">
           </div>
           <div>
-            <label for="manual-topic-code" class="block text-base font-semibold text-slate-700 mb-1">Topic number</label>
-            <input type="text" id="manual-topic-code" placeholder="e.g. DAF26BZ05-NV026" class="w-full bg-slate-50 border-2 border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-lg font-mono placeholder:text-slate-400">
+            <label for="manual-topic-code" class="block text-lg font-semibold text-slate-700 mb-1">Topic number</label>
+            <input type="text" id="manual-topic-code" placeholder="e.g. DAF26BZ05-NV026" class="w-full bg-slate-50 border-2 border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-xl font-mono placeholder:text-slate-400">
           </div>
         </div>
-        <button type="button" id="manual-use-btn" disabled class="bg-white border-2 border-slate-400 text-slate-800 text-base font-semibold px-3 py-1.5 rounded-lg transition-colors hover:border-slate-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-slate-400">Use for new draft</button>
+        <button type="button" id="manual-use-btn" disabled class="bg-white border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors hover:border-slate-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-slate-400">Use for new draft</button>
       </div>
 
       <div id="source-feed" class="flex flex-col gap-1.5">
         <div class="topic-result is-selected flex justify-between items-center gap-3 px-3 py-2.5 border-2 border-[#2E615F] bg-[#2E615F]/[0.1] rounded-lg cursor-pointer transition-colors" data-topic="Automated Lethality" data-code="DAF26BZ05-NV026">
-          <div><span class="font-semibold text-lg text-slate-900">Automated Lethality</span><br><span class="font-mono text-sm text-slate-600">DAF26BZ05-NV026</span></div>
-          <button type="button" class="use-topic-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-base font-semibold px-3 py-1.5 rounded-lg transition-colors">Use for new draft</button>
+          <div><span class="font-semibold text-xl text-slate-900">Automated Lethality</span><br><span class="font-mono text-sm text-slate-600">DAF26BZ05-NV026</span></div>
+          <button type="button" class="use-topic-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors">Use for new draft</button>
         </div>
         <div class="topic-result flex justify-between items-center gap-3 px-3 py-2.5 border-2 border-slate-300 bg-white rounded-lg cursor-pointer hover:border-[#2E615F]/60 transition-colors" data-topic="F-35 Agnostic Rapid Weapons Integration" data-code="DAF26BZ05-DV032">
-          <div><span class="font-semibold text-lg text-slate-900">F-35 Agnostic Rapid Weapons Integration</span><br><span class="font-mono text-sm text-slate-600">DAF26BZ05-DV032</span></div>
-          <button type="button" class="use-topic-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-base font-semibold px-3 py-1.5 rounded-lg transition-colors">Use for new draft</button>
+          <div><span class="font-semibold text-xl text-slate-900">F-35 Agnostic Rapid Weapons Integration</span><br><span class="font-mono text-sm text-slate-600">DAF26BZ05-DV032</span></div>
+          <button type="button" class="use-topic-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors">Use for new draft</button>
         </div>
         <div class="topic-result flex justify-between items-center gap-3 px-3 py-2.5 border-2 border-slate-300 bg-white rounded-lg cursor-pointer hover:border-[#2E615F]/60 transition-colors" data-topic="Dynamic Open Systems Enclave" data-code="DAF26BZ05-DV033">
-          <div><span class="font-semibold text-lg text-slate-900">Dynamic Open Systems Enclave</span><br><span class="font-mono text-sm text-slate-600">DAF26BZ05-DV033</span></div>
-          <button type="button" class="use-topic-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-base font-semibold px-3 py-1.5 rounded-lg transition-colors">Use for new draft</button>
+          <div><span class="font-semibold text-xl text-slate-900">Dynamic Open Systems Enclave</span><br><span class="font-mono text-sm text-slate-600">DAF26BZ05-DV033</span></div>
+          <button type="button" class="use-topic-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors">Use for new draft</button>
         </div>
         <div class="topic-result flex justify-between items-center gap-3 px-3 py-2.5 border-2 border-slate-300 bg-white rounded-lg cursor-pointer hover:border-[#2E615F]/60 transition-colors" data-topic="Ultra-Sensitive Quantum Telemetry Receiver" data-code="DAF26BZ05-NV028">
-          <div><span class="font-semibold text-lg text-slate-900">Ultra-Sensitive Quantum Telemetry Receiver</span><br><span class="font-mono text-sm text-slate-600">DAF26BZ05-NV028</span></div>
-          <button type="button" class="use-topic-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-base font-semibold px-3 py-1.5 rounded-lg transition-colors">Use for new draft</button>
+          <div><span class="font-semibold text-xl text-slate-900">Ultra-Sensitive Quantum Telemetry Receiver</span><br><span class="font-mono text-sm text-slate-600">DAF26BZ05-NV028</span></div>
+          <button type="button" class="use-topic-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors">Use for new draft</button>
         </div>
       </div>
     </section>
 
     <!-- ========== REFERENCE DOCUMENTS ========== -->
     <section id="section-reference" hidden>
-      <h1 class="font-display font-semibold text-4xl text-[#7A5C3E] mb-4">Reference Documents</h1>
-      <p class="text-lg text-slate-600 mb-3.5">General-purpose reference material — capability statements, boilerplate paragraphs, diagrams — kept separate from Historic Submissions, which tracks actual submitted proposals and their outcomes.</p>
+      <h1 class="font-display font-semibold text-5xl text-[#7A5C3E] mb-4">Reference Documents</h1>
+      <p class="text-xl text-slate-600 mb-3.5">General-purpose reference material — capability statements, boilerplate paragraphs, diagrams — kept separate from Historic Submissions, which tracks actual submitted proposals and their outcomes.</p>
 
       <div class="upload-zone border-2 border-dashed border-[#7A5C3E]/40 hover:border-[#7A5C3E]/60 rounded-xl bg-[#7A5C3E]/[0.05] px-4 py-3 mb-4 cursor-pointer transition-colors" data-upload="ref">
         <input type="file" id="file-ref" multiple hidden>
         <div class="flex items-center gap-3 flex-wrap">
           <span class="text-[#7A5C3E]">⇧</span>
-          <span class="text-base"><strong class="font-semibold text-slate-800">Add a reference document</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#7A5C3E] font-bold underline decoration-2 underline-offset-2">browse</button></span>
-          <span class="text-base text-slate-600 ml-auto">capability statements, past-performance write-ups, diagrams</span>
+          <span class="text-lg"><strong class="font-semibold text-slate-800">Add a reference document</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#7A5C3E] font-bold underline decoration-2 underline-offset-2">browse</button></span>
+          <span class="text-lg text-slate-600 ml-auto">capability statements, past-performance write-ups, diagrams</span>
         </div>
         <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-ref"></ul>
       </div>
@@ -328,24 +328,24 @@
         <div class="flex flex-col">
           <div class="flex items-center gap-3.5 py-3 border-b-2 border-slate-300">
             <div class="flex-1 min-w-0">
-              <div class="font-semibold text-lg text-slate-900">Company Capability Statement</div>
-              <div class="text-base text-slate-600 mt-0.5">PDF · updated 2026-08-02</div>
+              <div class="font-semibold text-xl text-slate-900">Company Capability Statement</div>
+              <div class="text-lg text-slate-600 mt-0.5">PDF · updated 2026-08-02</div>
             </div>
-            <span class="font-mono text-base font-bold px-2 py-0.5 rounded-md bg-[#7A5C3E] text-white">General</span>
+            <span class="font-mono text-lg font-bold px-2 py-0.5 rounded-md bg-[#7A5C3E] text-white">General</span>
           </div>
           <div class="flex items-center gap-3.5 py-3 border-b-2 border-slate-300">
             <div class="flex-1 min-w-0">
-              <div class="font-semibold text-lg text-slate-900">Embedded Systems Architecture Diagram</div>
-              <div class="text-base text-slate-600 mt-0.5">PNG · updated 2026-07-18</div>
+              <div class="font-semibold text-xl text-slate-900">Embedded Systems Architecture Diagram</div>
+              <div class="text-lg text-slate-600 mt-0.5">PNG · updated 2026-07-18</div>
             </div>
-            <span class="font-mono text-base font-bold px-2 py-0.5 rounded-md bg-[#3D4A73] text-white">Technical</span>
+            <span class="font-mono text-lg font-bold px-2 py-0.5 rounded-md bg-[#3D4A73] text-white">Technical</span>
           </div>
           <div class="flex items-center gap-3.5 py-3">
             <div class="flex-1 min-w-0">
-              <div class="font-semibold text-lg text-slate-900">Past Performance Boilerplate — WOSA Programs</div>
-              <div class="text-base text-slate-600 mt-0.5">DOCX · updated 2026-06-25</div>
+              <div class="font-semibold text-xl text-slate-900">Past Performance Boilerplate — WOSA Programs</div>
+              <div class="text-lg text-slate-600 mt-0.5">DOCX · updated 2026-06-25</div>
             </div>
-            <span class="font-mono text-base font-bold px-2 py-0.5 rounded-md bg-[#2E615F] text-white">Past Performance</span>
+            <span class="font-mono text-lg font-bold px-2 py-0.5 rounded-md bg-[#2E615F] text-white">Past Performance</span>
           </div>
         </div>
       </div>
@@ -356,7 +356,7 @@
   <div class="w-[95%] max-w-[1800px] mx-auto" id="wide-sections">
     <!-- ========== ARCHITECTURE ========== -->
     <section id="section-architecture" hidden>
-      <h1 class="font-display font-semibold text-4xl text-[#6B3F73] mb-4">Architecture</h1>
+      <h1 class="font-display font-semibold text-5xl text-[#6B3F73] mb-4">Architecture</h1>
 
       <div class="bg-white border-2 border-slate-300 rounded-xl p-5">
         <figure>
@@ -470,32 +470,32 @@
 
         <ol class="mt-5 pt-4 border-t-2 border-slate-200 grid gap-3">
           <li class="flex gap-3 items-start">
-            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#2E615F] text-white font-bold text-lg flex items-center justify-center">1</span>
-            <p class="text-lg text-slate-700 pt-0.5"><b class="text-slate-900">Pick a topic.</b> Paste an RFI manually, or pull one live from the DoD SBIR/STTR feed.</p>
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#2E615F] text-white font-bold text-xl flex items-center justify-center">1</span>
+            <p class="text-xl text-slate-700 pt-0.5"><b class="text-slate-900">Pick a topic.</b> Paste an RFI manually, or pull one live from the DoD SBIR/STTR feed.</p>
           </li>
           <li class="flex gap-3 items-start">
-            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#3D4A73] text-white font-bold text-lg flex items-center justify-center">2</span>
-            <p class="text-lg text-slate-700 pt-0.5"><b class="text-slate-900">Generate a draft.</b> The Generation Engine assembles a prompt from the topic, the Template Library, and any proven wording Trend Analysis has surfaced, then calls Claude Fable and/or Gemini.</p>
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#3D4A73] text-white font-bold text-xl flex items-center justify-center">2</span>
+            <p class="text-xl text-slate-700 pt-0.5"><b class="text-slate-900">Generate a draft.</b> The Generation Engine assembles a prompt from the topic, the Template Library, and any proven wording Trend Analysis has surfaced, then calls Claude Fable and/or Gemini.</p>
           </li>
           <li class="flex gap-3 items-start">
-            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-slate-500 text-white font-bold text-lg flex items-center justify-center">3</span>
-            <p class="text-lg text-slate-700 pt-0.5"><b class="text-slate-900">Review &amp; edit.</b> Compare drafts from each model, edit sections, regenerate as needed.</p>
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-slate-500 text-white font-bold text-xl flex items-center justify-center">3</span>
+            <p class="text-xl text-slate-700 pt-0.5"><b class="text-slate-900">Review &amp; edit.</b> Compare drafts from each model, edit sections, regenerate as needed.</p>
           </li>
           <li class="flex gap-3 items-start">
-            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#3D4A73] text-white font-bold text-lg flex items-center justify-center">4</span>
-            <p class="text-lg text-slate-700 pt-0.5"><b class="text-slate-900">Export.</b> Download the finished draft as a Word doc or Google Doc.</p>
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#3D4A73] text-white font-bold text-xl flex items-center justify-center">4</span>
+            <p class="text-xl text-slate-700 pt-0.5"><b class="text-slate-900">Export.</b> Download the finished draft as a Word doc or Google Doc.</p>
           </li>
           <li class="flex gap-3 items-start">
-            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#3F6647] text-white font-bold text-lg flex items-center justify-center">5</span>
-            <p class="text-lg text-slate-700 pt-0.5"><b class="text-slate-900">Tag the outcome.</b> Once you hear back, mark the submission won, lost, or no reply in Historic Submissions.</p>
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#3F6647] text-white font-bold text-xl flex items-center justify-center">5</span>
+            <p class="text-xl text-slate-700 pt-0.5"><b class="text-slate-900">Tag the outcome.</b> Once you hear back, mark the submission won, lost, or no reply in Historic Submissions.</p>
           </li>
           <li class="flex gap-3 items-start">
-            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#8A6A1E] text-white font-bold text-lg flex items-center justify-center">6</span>
-            <p class="text-lg text-slate-700 pt-0.5"><b class="text-slate-900">Learn from it.</b> That outcome lands in the Memory Store, and Trend Analysis mines it for wording that correlates with wins — it'll show up highlighted in your next draft.</p>
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#8A6A1E] text-white font-bold text-xl flex items-center justify-center">6</span>
+            <p class="text-xl text-slate-700 pt-0.5"><b class="text-slate-900">Learn from it.</b> That outcome lands in the Memory Store, and Trend Analysis mines it for wording that correlates with wins — it'll show up highlighted in your next draft.</p>
           </li>
           <li class="flex gap-3 items-start opacity-70">
-            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-white text-slate-500 font-bold text-lg flex items-center justify-center border-2 border-dashed border-slate-400">+</span>
-            <p class="text-lg text-slate-600 pt-0.5 italic"><b class="text-slate-700 not-italic">Tentative:</b> a Topic Poller could run step 1 automatically, on a schedule, instead of waiting for you to check.</p>
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-white text-slate-500 font-bold text-xl flex items-center justify-center border-2 border-dashed border-slate-400">+</span>
+            <p class="text-xl text-slate-600 pt-0.5 italic"><b class="text-slate-700 not-italic">Tentative:</b> a Topic Poller could run step 1 automatically, on a schedule, instead of waiting for you to check.</p>
           </li>
         </ol>
       </div>
@@ -529,10 +529,10 @@
     btn.addEventListener('click', function(){
       document.querySelectorAll('.source-btn').forEach(function(b){
         b.setAttribute('aria-pressed', 'false');
-        b.className = 'source-btn px-3 py-1.5 rounded-full text-slate-600 font-semibold text-base transition-colors';
+        b.className = 'source-btn px-3 py-1.5 rounded-full text-slate-600 font-semibold text-lg transition-colors';
       });
       btn.setAttribute('aria-pressed', 'true');
-      btn.className = 'source-btn px-3 py-1.5 rounded-full bg-[#2E615F] text-white font-semibold text-base transition-colors';
+      btn.className = 'source-btn px-3 py-1.5 rounded-full bg-[#2E615F] text-white font-semibold text-lg transition-colors';
       var manual = document.getElementById('source-manual');
       var feed = document.getElementById('source-feed');
       if (btn.dataset.source === 'manual') { manual.hidden = false; feed.hidden = true; }
@@ -581,9 +581,9 @@
       var selected = b.dataset.tab === which;
       b.setAttribute('aria-selected', String(selected));
       var isFable = b.dataset.tab === 'fable';
-      if (selected && isFable) b.className = 'border-2 border-[#3D4A73] text-white bg-[#3D4A73] text-base font-semibold px-3 py-1.5 rounded-md transition-colors';
-      else if (selected && !isFable) b.className = 'border-2 border-[#2E615F] text-white bg-[#2E615F] text-base font-semibold px-3 py-1.5 rounded-md transition-colors';
-      else b.className = 'border-2 border-slate-300 text-slate-600 bg-white text-base font-semibold px-3 py-1.5 rounded-md transition-colors';
+      if (selected && isFable) b.className = 'border-2 border-[#3D4A73] text-white bg-[#3D4A73] text-lg font-semibold px-3 py-1.5 rounded-md transition-colors';
+      else if (selected && !isFable) b.className = 'border-2 border-[#2E615F] text-white bg-[#2E615F] text-lg font-semibold px-3 py-1.5 rounded-md transition-colors';
+      else b.className = 'border-2 border-slate-300 text-slate-600 bg-white text-lg font-semibold px-3 py-1.5 rounded-md transition-colors';
     });
     var badge = document.getElementById('model-badge');
     badge.textContent = which === 'fable' ? 'Claude Fable' : 'Gemini';
@@ -594,13 +594,13 @@
     btn.addEventListener('click', function(){
       document.querySelectorAll('.model-btn').forEach(function(b){
         b.setAttribute('aria-pressed', 'false');
-        b.className = 'model-btn px-3 py-1.5 rounded-md text-slate-600 font-semibold text-base transition-colors';
+        b.className = 'model-btn px-3 py-1.5 rounded-md text-slate-600 font-semibold text-lg transition-colors';
       });
       btn.setAttribute('aria-pressed', 'true');
       var mode = btn.dataset.model;
-      if (mode === 'fable') btn.className = 'model-btn px-3 py-1.5 rounded-md bg-[#3D4A73] text-white font-semibold text-base transition-colors';
-      else if (mode === 'gemini') btn.className = 'model-btn px-3 py-1.5 rounded-md bg-[#2E615F] text-white font-semibold text-base transition-colors';
-      else btn.className = 'model-btn px-3 py-1.5 rounded-md bg-slate-800 text-white font-semibold text-base transition-colors';
+      if (mode === 'fable') btn.className = 'model-btn px-3 py-1.5 rounded-md bg-[#3D4A73] text-white font-semibold text-lg transition-colors';
+      else if (mode === 'gemini') btn.className = 'model-btn px-3 py-1.5 rounded-md bg-[#2E615F] text-white font-semibold text-lg transition-colors';
+      else btn.className = 'model-btn px-3 py-1.5 rounded-md bg-slate-800 text-white font-semibold text-lg transition-colors';
 
       if (mode === 'both') { tabsBar.hidden = false; setDraftTab('fable'); }
       else { tabsBar.hidden = true; setDraftTab(mode); }
@@ -684,11 +684,11 @@
       var group = btn.closest('.outcome-buttons');
       group.querySelectorAll('.tag-btn').forEach(function(b){
         b.setAttribute('aria-pressed', 'false');
-        b.className = 'tag-btn border-2 border-slate-400 bg-white text-slate-700 rounded-md px-2.5 py-1.5 text-base font-semibold transition-colors';
+        b.className = 'tag-btn border-2 border-slate-400 bg-white text-slate-700 rounded-md px-2.5 py-1.5 text-lg font-semibold transition-colors';
       });
       btn.setAttribute('aria-pressed', 'true');
-      if (btn.dataset.tag === 'won') btn.className = 'tag-btn border-2 border-[#3F6647] bg-[#3F6647] text-white rounded-md px-2.5 py-1.5 text-base font-semibold transition-colors';
-      else btn.className = 'tag-btn border-2 border-[#A34A34] bg-[#A34A34] text-white rounded-md px-2.5 py-1.5 text-base font-semibold transition-colors';
+      if (btn.dataset.tag === 'won') btn.className = 'tag-btn border-2 border-[#3F6647] bg-[#3F6647] text-white rounded-md px-2.5 py-1.5 text-lg font-semibold transition-colors';
+      else btn.className = 'tag-btn border-2 border-[#A34A34] bg-[#A34A34] text-white rounded-md px-2.5 py-1.5 text-lg font-semibold transition-colors';
     });
   });
 
@@ -707,12 +707,12 @@
       list.innerHTML = '';
       files.forEach(function(f, idx){
         var li = document.createElement('li');
-        li.className = 'flex items-center gap-2 bg-white border-2 border-slate-300 rounded-md px-2.5 py-1.5 text-base';
+        li.className = 'flex items-center gap-2 bg-white border-2 border-slate-300 rounded-md px-2.5 py-1.5 text-lg';
         var ext = (f.name.split('.').pop() || 'file').toUpperCase().slice(0, 4);
         var extEl = document.createElement('span'); extEl.className = 'font-mono text-sm font-bold text-white bg-slate-600 px-1.5 rounded'; extEl.textContent = ext;
         var nameEl = document.createElement('span'); nameEl.className = 'flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-slate-800 font-medium'; nameEl.textContent = f.name;
-        var sizeEl = document.createElement('span'); sizeEl.className = 'text-slate-500 font-mono text-base'; sizeEl.textContent = formatSize(f.size);
-        var removeEl = document.createElement('button'); removeEl.type = 'button'; removeEl.className = 'text-slate-500 hover:text-[#A34A34] text-lg leading-none px-0.5 font-bold';
+        var sizeEl = document.createElement('span'); sizeEl.className = 'text-slate-500 font-mono text-lg'; sizeEl.textContent = formatSize(f.size);
+        var removeEl = document.createElement('button'); removeEl.type = 'button'; removeEl.className = 'text-slate-500 hover:text-[#A34A34] text-xl leading-none px-0.5 font-bold';
         removeEl.setAttribute('aria-label', 'Remove ' + f.name); removeEl.textContent = '×';
         removeEl.addEventListener('click', function(e){ e.stopPropagation(); files.splice(idx, 1); render(); });
         li.append(extEl, nameEl, sizeEl, removeEl);
