@@ -2,6 +2,7 @@
 <title>Draft Console</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
   tailwind.config = {
     theme: {
@@ -213,11 +214,22 @@
           <p class="text-lg text-slate-600 font-medium mt-1">Upload the RFI PDF above and this panel fills in automatically — topic, page count, due date, and what's still missing from your checklist.</p>
         </div>
 
+        <div id="extracted-info-loading" hidden class="bg-white border-2 border-[#3D4A73]/40 rounded-xl p-5 text-center">
+          <div class="text-[#3D4A73] font-mono animate-pulse">⇧</div>
+          <p class="text-lg text-slate-600 font-medium mt-1">Reading PDF…</p>
+        </div>
+
+        <div id="extracted-info-error" hidden class="bg-[#A34A34]/10 border-2 border-[#A34A34]/40 rounded-xl p-5">
+          <div class="font-semibold text-lg text-[#A34A34] mb-1">⚠ Couldn't read this file</div>
+          <p class="text-lg text-slate-700" id="extract-error-message">—</p>
+        </div>
+
         <div id="extracted-info-panel" hidden class="bg-white border-2 border-[#3D4A73] rounded-xl p-5">
           <div class="flex items-center gap-2 mb-4 pb-3 border-b-2 border-slate-300">
             <span class="text-[#3D4A73]">✓</span>
             <span class="font-display font-semibold text-xl text-slate-900">Extracted from PDF</span>
           </div>
+          <p class="text-sm text-slate-500 mb-4 -mt-2">Page count is read directly from the file. Due date and format are pattern-matched from the extracted text — verify before relying on them.</p>
           <dl class="grid gap-3 mb-4">
             <div>
               <dt class="text-sm font-mono uppercase tracking-wide text-slate-500">Topic</dt>
@@ -229,20 +241,20 @@
             </div>
             <div>
               <dt class="text-sm font-mono uppercase tracking-wide text-slate-500">Page count</dt>
-              <dd class="text-lg text-slate-900">14 pages (Vol. I Technical)</dd>
+              <dd id="extract-pages" class="text-lg text-slate-900">—</dd>
             </div>
             <div>
               <dt class="text-sm font-mono uppercase tracking-wide text-slate-500">Due date</dt>
-              <dd class="text-lg text-slate-900">2026-09-30, 5:00 PM ET</dd>
+              <dd id="extract-due" class="text-lg text-slate-900">—</dd>
             </div>
             <div>
               <dt class="text-sm font-mono uppercase tracking-wide text-slate-500">Format</dt>
-              <dd class="text-lg text-slate-900">12pt Times New Roman, 1" margins</dd>
+              <dd id="extract-format" class="text-lg text-slate-900">—</dd>
             </div>
           </dl>
-          <div class="bg-[#A34A34]/10 border-2 border-[#A34A34]/40 rounded-lg p-3">
-            <div class="font-semibold text-lg text-[#A34A34] mb-1">⚠ Missing from this document</div>
-            <p class="text-lg text-slate-700">Q&amp;A answers weren't found in the PDF — check the SBIR/STTR feed's amendments, or paste them into the checklist manually.</p>
+          <div id="extract-missing" hidden class="bg-[#A34A34]/10 border-2 border-[#A34A34]/40 rounded-lg p-3">
+            <div class="font-semibold text-lg text-[#A34A34] mb-1">⚠ Not found automatically</div>
+            <p class="text-lg text-slate-700"></p>
           </div>
         </div>
       </div>
@@ -738,38 +750,148 @@
   if (rfiFileList) {
     var rfiItem = rfiFileList.closest('.checklist-item');
     var rfiTextarea = document.getElementById('checklist-rfi-details');
-    var prevRfiFileCount = 0;
     new MutationObserver(function(){
       var count = rfiFileList.children.length;
       setChecklistChecked(rfiItem, count > 0 || rfiTextarea.value.trim().length > 0);
-      if (count > 0 && prevRfiFileCount === 0) runPdfExtraction();
-      if (count === 0 && prevRfiFileCount > 0) resetPdfExtraction();
-      prevRfiFileCount = count;
+      if (count === 0) resetPdfExtraction();
     }).observe(rfiFileList, {childList: true});
   }
 
-  // mock PDF extraction — no real parsing, just demonstrates the flow:
-  // auto-fill what a PDF scan would plausibly find, flag what it wouldn't.
-  function runPdfExtraction(){
-    var instructions = document.getElementById('checklist-instructions');
-    var rules = document.getElementById('checklist-rules');
-    if (!instructions.value.trim()) {
-      instructions.value = "Volume I (Technical) shall not exceed 15 pages, 12pt Times New Roman, 1\" margins. Submit as a single PDF via DSIP. Late submissions will not be reviewed.";
-      instructions.dispatchEvent(new Event('input', {bubbles: true}));
-    }
-    if (!rules.value.trim()) {
-      rules.value = "Required components: Cover Sheet, Technical Volume, Cost Volume, Company Commercialization Report. Sensor fusion and weaponeering handoff modules must expose documented, government-owned interfaces per WOSA.";
-      rules.dispatchEvent(new Event('input', {bubbles: true}));
-    }
-    document.getElementById('extract-topic').textContent = document.getElementById('topic-title-el').textContent;
-    document.getElementById('extract-code').textContent = document.getElementById('topic-code-el').textContent.split(' · ')[0];
-    document.getElementById('extracted-info-empty').hidden = true;
-    document.getElementById('extracted-info-panel').hidden = false;
+  // real PDF text extraction via PDF.js — reads the actual uploaded file,
+  // no fabricated content. Page count is exact; due date/format are simple
+  // regex pattern-matches over the extracted text; instructions/rules are
+  // picked by keyword-scoring each page's text as a crude heuristic. Nothing
+  // here is a language model — it's honest text-search, and says so when it
+  // can't find something rather than inventing an answer.
+  if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   }
+
+  async function extractPdfText(file){
+    var buf = await file.arrayBuffer();
+    var pdf = await pdfjsLib.getDocument({data: buf}).promise;
+    var pages = [];
+    for (var i = 1; i <= pdf.numPages; i++){
+      var page = await pdf.getPage(i);
+      var content = await page.getTextContent();
+      pages.push(content.items.map(function(it){ return it.str; }).join(' ').trim());
+    }
+    return {numPages: pdf.numPages, pages: pages, text: pages.join('\n\n')};
+  }
+
+  function findDueDate(text){
+    var m = text.match(/\b(0?[1-9]|1[0-2])\/(0?[1-9]|[12]\d|3[01])\/(\d{4})\b[^.]{0,25}/);
+    if (m) return m[0].trim();
+    m = text.match(/\b\d{4}-\d{2}-\d{2}\b[^.]{0,25}/);
+    return m ? m[0].trim() : null;
+  }
+
+  function findFormat(text){
+    var parts = [];
+    var fontMatch = text.match(/\b\d{1,2}\s?pt\b[^,.]{0,25}/i);
+    var marginMatch = text.match(/\b\d(\.\d)?\s?inch\b[^,.]{0,20}/i);
+    if (fontMatch) parts.push(fontMatch[0].trim());
+    if (marginMatch && marginMatch[0].trim() !== (fontMatch && fontMatch[0].trim())) {
+      parts.push(marginMatch[0].trim());
+    }
+    return parts.length ? parts.join(', ') : null;
+  }
+
+  function findByKeywords(pages, keywords){
+    var best = null, bestScore = 0;
+    pages.forEach(function(p){
+      var lower = p.toLowerCase();
+      var score = keywords.reduce(function(n, k){ return n + (lower.indexOf(k) !== -1 ? 1 : 0); }, 0);
+      if (score > bestScore){ bestScore = score; best = p; }
+    });
+    return bestScore > 0 ? best : null;
+  }
+
+  async function runPdfExtraction(file){
+    document.getElementById('extracted-info-empty').hidden = true;
+    document.getElementById('extracted-info-panel').hidden = true;
+    document.getElementById('extracted-info-error').hidden = true;
+    document.getElementById('extracted-info-loading').hidden = false;
+
+    try {
+      var result = await extractPdfText(file);
+      var missing = [];
+
+      document.getElementById('extract-pages').textContent = result.numPages + (result.numPages === 1 ? ' page' : ' pages');
+      document.getElementById('extract-topic').textContent = document.getElementById('topic-title-el').textContent;
+      document.getElementById('extract-code').textContent = document.getElementById('topic-code-el').textContent.split(' · ')[0];
+
+      var due = findDueDate(result.text);
+      document.getElementById('extract-due').textContent = due || 'Not found in document';
+      if (!due) missing.push('due date');
+
+      var format = findFormat(result.text);
+      document.getElementById('extract-format').textContent = format || 'Not found in document';
+      if (!format) missing.push('formatting requirements');
+
+      var rfiTa = document.getElementById('checklist-rfi-details');
+      if (!rfiTa.value.trim() && result.text) {
+        rfiTa.value = result.text.length > 4000 ? result.text.slice(0, 4000) + '\n\n[truncated]' : result.text;
+        rfiTa.dispatchEvent(new Event('input', {bubbles: true}));
+      }
+
+      var instructions = document.getElementById('checklist-instructions');
+      if (!instructions.value.trim()) {
+        var foundInstr = findByKeywords(result.pages, ['instruction', 'margin', 'font', 'due', 'submit', 'shall not exceed', 'page limit']);
+        if (foundInstr) { instructions.value = foundInstr; instructions.dispatchEvent(new Event('input', {bubbles: true})); }
+        else missing.push('solicitation instructions');
+      }
+
+      var rules = document.getElementById('checklist-rules');
+      if (!rules.value.trim()) {
+        var foundRules = findByKeywords(result.pages, ['required component', 'shall include', 'interface', 'compliant', 'wosa', 'cover sheet', 'cost volume', 'component list']);
+        if (foundRules) { rules.value = foundRules; rules.dispatchEvent(new Event('input', {bubbles: true})); }
+        else missing.push('rules and component list');
+      }
+
+      if (!document.getElementById('checklist-qa').value.trim()) missing.push('Q&A answers');
+
+      var missingBox = document.getElementById('extract-missing');
+      if (missing.length) {
+        missingBox.hidden = false;
+        missingBox.querySelector('p').textContent = 'Not found automatically: ' + missing.join(', ') + '. Review the extracted text above, or paste these manually.';
+      } else {
+        missingBox.hidden = true;
+      }
+
+      document.getElementById('extracted-info-loading').hidden = true;
+      document.getElementById('extracted-info-panel').hidden = false;
+    } catch (err) {
+      document.getElementById('extracted-info-loading').hidden = true;
+      document.getElementById('extracted-info-error').hidden = false;
+      document.getElementById('extract-error-message').textContent = (err && err.message) ? err.message : 'Is this a valid PDF?';
+    }
+  }
+
   function resetPdfExtraction(){
     document.getElementById('extracted-info-empty').hidden = false;
     document.getElementById('extracted-info-panel').hidden = true;
+    document.getElementById('extracted-info-loading').hidden = true;
+    document.getElementById('extracted-info-error').hidden = true;
   }
+
+  var checklistRfiZone = document.querySelector('[data-upload="checklist-rfi"]');
+  var checklistRfiInput = document.getElementById('file-checklist-rfi');
+  function handleRfiFile(fileList){
+    var file = fileList && fileList[0];
+    if (!file) return;
+    var isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+    if (!isPdf) {
+      document.getElementById('extracted-info-empty').hidden = true;
+      document.getElementById('extracted-info-panel').hidden = true;
+      document.getElementById('extracted-info-error').hidden = false;
+      document.getElementById('extract-error-message').textContent = '"' + file.name + '" isn\'t a PDF — extraction only reads PDF files. It\'s still attached to the checklist.';
+      return;
+    }
+    runPdfExtraction(file);
+  }
+  checklistRfiZone.addEventListener('drop', function(e){ handleRfiFile(e.dataTransfer.files); });
+  checklistRfiInput.addEventListener('change', function(){ handleRfiFile(checklistRfiInput.files); });
 
   // resume a saved draft: reload its topic into New Draft
   document.querySelectorAll('.resume-draft-btn').forEach(function(btn){
