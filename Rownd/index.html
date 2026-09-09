@@ -1459,8 +1459,19 @@
     }
 
     function addFiles(fileListObj){
-      Array.from(fileListObj).forEach(function(f){ files.push(f); });
+      var added = Array.from(fileListObj);
+      added.forEach(function(f){ files.push(f); });
       render();
+      // The top-of-page "reference files" zone looks like any other upload
+      // box, so a topic PDF dropped here should extract too, not silently
+      // sit unread while only the checklist's own RFI-details zone works.
+      if (zone.dataset.upload === 'nd') {
+        var pdf = added.find(function(f){ return f.type === 'application/pdf' || /\.pdf$/i.test(f.name); });
+        if (pdf) {
+          handleRfiFile([pdf]);
+          setChecklistChecked(document.getElementById('checklist-rfi-details').closest('.checklist-item'), true);
+        }
+      }
     }
 
     zone.addEventListener('click', function(e){
