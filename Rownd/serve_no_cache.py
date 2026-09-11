@@ -41,6 +41,7 @@ import hashlib
 import hmac
 import os
 import secrets
+import socket
 import sys
 from getpass import getpass
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -48,6 +49,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 HASH_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.archive_auth_hash')
 ARCHIVE_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'private-rfi-archive'))
 LOGIN_PATH = '/archive-login'
+MKDIR_PATH = '/archive-mkdir'
 SESSION_COOKIE_NAME = 'archive_session'
 
 
@@ -155,36 +157,96 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
             return self._deny()
         return super().do_HEAD()
 
-    def do_POST(self):
-        if self.path != LOGIN_PATH:
-            self.send_error(501, 'Unsupported method (POST)')
-            return
+    def _read_bounded_body(self, max_len=4096):
+        # Shared by every POST endpoint here: validate Content-Length
+        # before trusting it (a negative or absurd value fed straight to
+        # rfile.read() previously hung the whole single-threaded server —
+        # see the `timeout` attribute above for the general backstop, and
+        # this bound for the immediate, specific case), and don't let a
+        # client that stalls mid-body past the connection timeout escape
+        # as an uncaught exception. Returns the decoded string, or None
+        # if invalid — having already sent an error response itself.
         try:
             length = int(self.headers.get('Content-Length', 0))
         except ValueError:
             length = -1
-        # A password is never going to be anywhere near this long; a
-        # negative or huge claimed length is either a malformed request or
-        # someone poking at the endpoint, not a real login attempt.
-        if length < 0 or length > 4096:
+        if length < 0 or length > max_len:
             self.send_error(400, 'Bad Content-Length')
+            return None
+        try:
+            return self.rfile.read(length).decode('utf-8', errors='replace')
+        except socket.timeout:
+            self.send_error(408, 'Request body timed out')
+            return None
+
+    def _respond(self, status, body_text):
+        body = body_text.encode('utf-8')
+        self.send_response(status)
+        self.send_header('Content-Type', 'text/plain')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_POST(self):
+        if self.path == LOGIN_PATH:
+            return self._handle_login()
+        if self.path == MKDIR_PATH:
+            return self._handle_mkdir()
+        self.send_error(501, 'Unsupported method (POST)')
+
+    def _handle_login(self):
+        # A password is never going to be anywhere near 4096 bytes; this
+        # is about rejecting a malformed/huge claimed length, not real
+        # passwords.
+        supplied_pw = self._read_bounded_body()
+        if supplied_pw is None:
             return
-        supplied_pw = self.rfile.read(length).decode('utf-8', errors='replace')
         if hmac.compare_digest(sha256_hex(supplied_pw), PASSWORD_HASH):
-            body = b'OK'
             self.send_response(200)
             # Session-only cookie (no Max-Age/Expires): cleared when the
             # browser closes. HttpOnly so page JS can't read the token
             # even via an XSS bug. Path=/ keeps this simple for a server
             # that only ever serves this one small app.
             self.send_header('Set-Cookie', '{}={}; HttpOnly; Path=/; SameSite=Strict'.format(SESSION_COOKIE_NAME, SESSION_SECRET))
+            body = b'OK'
+            self.send_header('Content-Type', 'text/plain')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
         else:
-            body = b'Wrong password.'
-            self.send_response(403)
-        self.send_header('Content-Type', 'text/plain')
-        self.send_header('Content-Length', str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+            self._respond(403, 'Wrong password.')
+
+    def _handle_mkdir(self):
+        if not self._authorized():
+            return self._deny()
+        name = self._read_bounded_body()
+        if name is None:
+            return
+        name = name.strip()
+        # A single, plain path segment only — no separators, no ".."/"."
+        # tricks, no leading dot (those are reserved for our own
+        # scaffolding, e.g. .gitkeep). This alone makes traversal outside
+        # ARCHIVE_DIR impossible; no need to double-check via realpath
+        # since the input can't contain a path separator at all.
+        valid = (
+            bool(name)
+            and '/' not in name
+            and '\\' not in name
+            and name not in ('.', '..')
+            and not name.startswith('.')
+            and len(name) <= 200
+        )
+        if not valid:
+            return self._respond(400, 'Invalid folder name.')
+        target = os.path.join(ARCHIVE_DIR, name)
+        try:
+            os.makedirs(target, exist_ok=False)
+        except FileExistsError:
+            self._respond(409, 'A folder with that name already exists.')
+        except (OSError, ValueError):
+            self._respond(500, 'Could not create that folder.')
+        else:
+            self._respond(200, 'OK')
 
 
 if __name__ == '__main__':

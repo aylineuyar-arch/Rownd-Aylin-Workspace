@@ -529,9 +529,14 @@
             <button type="button" id="archive-pw-submit" class="bg-[#A34A34] hover:bg-[#8a3d2b] text-white font-semibold text-lg px-3.5 py-2 rounded-lg transition-colors">Unlock</button>
           </div>
           <p id="archive-pw-error" hidden class="text-lg text-[#A34A34] font-semibold mt-1.5">Wrong password.</p>
-          <p class="text-sm text-slate-500 mt-2 leading-relaxed">Set or change this from the terminal running <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">serve_no_cache.py</code> — it lives only on this machine (<code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">Rownd/.archive_auth_hash</code>, git-ignored), never in the page or the repo.</p>
         </div>
         <ul id="private-archive-list" hidden class="flex flex-col gap-1.5"></ul>
+
+        <div id="private-archive-new-folder" hidden class="flex gap-2 items-center flex-wrap mt-3 pt-3 border-t-2 border-slate-200">
+          <input type="text" id="archive-folder-name" placeholder="New folder name" class="bg-slate-50 border-2 border-slate-300 rounded-lg px-3 py-2 text-lg flex-1 min-w-0">
+          <button type="button" id="archive-folder-create-btn" class="bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap">Create Folder</button>
+        </div>
+        <p id="archive-folder-error" hidden class="text-lg text-[#A34A34] font-semibold mt-1.5"></p>
       </div>
 
       <div class="upload-zone border-2 border-dashed border-[#7A5C3E]/40 hover:border-[#7A5C3E]/60 rounded-xl bg-[#7A5C3E]/[0.05] px-4 py-3 mb-4 cursor-pointer transition-colors" data-upload="ref">
@@ -1514,6 +1519,20 @@
   // doesn't exist, so the fetch 404s and this falls back to "not
   // available" instead of erroring.
   var MAX_ARCHIVE_DEPTH = 6;
+  var ARCHIVE_FETCH_CONCURRENCY = 4;
+
+  // Promise.all with no cap means a wide folder tree fans out one fetch
+  // per sibling at every level simultaneously and unboundedly — fine for
+  // a couple of folders, not fine in general. Runs in small batches
+  // instead: still parallel, just not unlimited.
+  async function mapWithConcurrencyLimit(items, limit, fn){
+    var results = [];
+    for (var i = 0; i < items.length; i += limit) {
+      var batch = items.slice(i, i + limit);
+      results = results.concat(await Promise.all(batch.map(fn)));
+    }
+    return results;
+  }
 
   function isIgnoredArchiveEntry(name){
     // Only our own scaffolding files are excluded — a real file the user
@@ -1525,7 +1544,11 @@
     return !name || name === '../' || name === '.gitkeep' || lower === 'readme.md';
   }
 
-  async function walkArchiveDir(relPath, depth){
+  // folderAccumulator collects every folder path encountered (not just
+  // empty ones) so a folder with nothing in it yet — like one you just
+  // created — still shows up somewhere, instead of the listing looking
+  // exactly like "nothing happened" after Create Folder actually worked.
+  async function walkArchiveDir(relPath, depth, folderAccumulator){
     if (depth > MAX_ARCHIVE_DEPTH) return [];
     var res = await fetch('private-rfi-archive/' + relPath);
     if (res.status === 403) { var authErr = new Error('auth required'); authErr.authRequired = true; throw authErr; }
@@ -1541,9 +1564,12 @@
 
     var fileNames = entries.filter(function(e){ return e.slice(-1) !== '/'; }).map(function(e){ return relPath + e; });
     var folderNames = entries.filter(function(e){ return e.slice(-1) === '/'; });
+    folderNames.forEach(function(e){ folderAccumulator.push(relPath + e); });
     // Subfolders are independent requests — no reason to wait for one
-    // before starting the next.
-    var nested = await Promise.all(folderNames.map(function(e){ return walkArchiveDir(relPath + e, depth + 1); }));
+    // before starting the next — but capped, not unbounded.
+    var nested = await mapWithConcurrencyLimit(folderNames, ARCHIVE_FETCH_CONCURRENCY, function(e){
+      return walkArchiveDir(relPath + e, depth + 1, folderAccumulator);
+    });
     return fileNames.concat.apply(fileNames, nested);
   }
 
@@ -1553,25 +1579,49 @@
     var unavailableEl = document.getElementById('private-archive-unavailable');
     var authNeededEl = document.getElementById('private-archive-auth-needed');
     var listEl = document.getElementById('private-archive-list');
+    var newFolderEl = document.getElementById('private-archive-new-folder');
     authNeededEl.hidden = true;
     try {
       // The server (serve_no_cache.py) denies these with a plain 403 until
       // the archive-login form below has set a session cookie — the
       // browser then attaches that cookie automatically to every request
       // here and to the file links themselves, no per-request work needed.
-      var names = (await walkArchiveDir('', 0)).sort();
+      var folders = [];
+      var names = (await walkArchiveDir('', 0, folders)).sort();
+      folders.sort();
 
       loadingEl.hidden = true;
-      if (!names.length) { emptyEl.hidden = false; unavailableEl.hidden = true; listEl.hidden = true; return; }
+      newFolderEl.hidden = false; // reaching here means we're authenticated
+      if (!names.length && !folders.length) { emptyEl.hidden = false; unavailableEl.hidden = true; listEl.hidden = true; return; }
 
       emptyEl.hidden = true;
       unavailableEl.hidden = true;
       listEl.hidden = false;
       listEl.innerHTML = '';
 
-      // Build every row first (no network involved), then fetch all the
-      // HEAD-request sizes in parallel — independent requests, no reason
-      // to wait for file 1's size before even asking about file 2.
+      // Folders first (so a newly-created empty one is immediately
+      // visible — real confirmation Create Folder worked, not silence),
+      // then files. Folders link to their own directory listing instead
+      // of a HEAD-checked size, since "size" doesn't mean anything for one.
+      folders.forEach(function(folderPath){
+        var li = document.createElement('li');
+        li.className = 'flex items-center gap-2 bg-white border-2 border-slate-300 rounded-md px-2.5 py-1.5 text-lg';
+        var dirEl = document.createElement('span');
+        dirEl.className = 'font-mono text-sm font-bold text-white bg-slate-500 px-1.5 rounded';
+        dirEl.textContent = 'DIR';
+        var link = document.createElement('a');
+        link.href = 'private-rfi-archive/' + folderPath.split('/').filter(Boolean).map(encodeURIComponent).join('/') + '/';
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.className = 'flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-slate-700 font-semibold underline decoration-2 underline-offset-2';
+        link.textContent = folderPath; // e.g. "SBIR-25-101/"
+        li.append(dirEl, link);
+        listEl.appendChild(li);
+      });
+
+      // Build every file row first (no network involved), then fetch all
+      // the HEAD-request sizes in parallel — independent requests, no
+      // reason to wait for file 1's size before even asking about file 2.
       var rows = names.map(function(relPath){
         var baseName = relPath.split('/').pop();
         var href = 'private-rfi-archive/' + relPath.split('/').map(encodeURIComponent).join('/');
@@ -1592,7 +1642,7 @@
         return {li: li, href: href};
       });
 
-      await Promise.all(rows.map(async function(row){
+      await mapWithConcurrencyLimit(rows, ARCHIVE_FETCH_CONCURRENCY, async function(row){
         try {
           var headRes = await fetch(row.href, {method: 'HEAD'});
           var len = headRes.headers.get('Content-Length');
@@ -1603,9 +1653,10 @@
             row.li.appendChild(sizeEl);
           }
         } catch (e) { /* size is a nice-to-have, not required */ }
-      }));
+      });
     } catch (err) {
       loadingEl.hidden = true;
+      newFolderEl.hidden = true;
       if (err && err.authRequired) {
         emptyEl.hidden = true; listEl.hidden = true;
         authNeededEl.hidden = false;
@@ -1633,6 +1684,26 @@
   });
   archivePwInput.addEventListener('keydown', function(e){
     if (e.key === 'Enter') archivePwSubmit.click();
+  });
+
+  var archiveFolderInput = document.getElementById('archive-folder-name');
+  var archiveFolderBtn = document.getElementById('archive-folder-create-btn');
+  archiveFolderBtn.addEventListener('click', async function(){
+    var name = archiveFolderInput.value.trim();
+    var errEl = document.getElementById('archive-folder-error');
+    if (!name) return;
+    var res = await fetch('/archive-mkdir', {method: 'POST', body: name});
+    if (res.ok) {
+      errEl.hidden = true;
+      archiveFolderInput.value = '';
+      loadPrivateArchive();
+    } else {
+      errEl.textContent = await res.text();
+      errEl.hidden = false;
+    }
+  });
+  archiveFolderInput.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') archiveFolderBtn.click();
   });
 
   loadPrivateArchive();
