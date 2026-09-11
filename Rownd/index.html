@@ -507,6 +507,16 @@
       <h1 class="font-display font-semibold text-5xl text-[#7A5C3E] mb-4">Reference Documents</h1>
       <p class="text-xl text-slate-600 mb-3.5">General-purpose reference material — capability statements, boilerplate paragraphs, diagrams — kept separate from Historic Submissions, which tracks actual submitted proposals and their outcomes.</p>
 
+      <div class="upload-zone border-2 border-dashed border-[#7A5C3E]/40 hover:border-[#7A5C3E]/60 rounded-xl bg-[#7A5C3E]/[0.05] px-4 py-3 mb-4 cursor-pointer transition-colors" data-upload="ref">
+        <input type="file" id="file-ref" multiple hidden>
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="text-[#7A5C3E]">⇧</span>
+          <span class="text-lg"><strong class="font-semibold text-slate-800">Add a reference document</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#7A5C3E] font-bold underline decoration-2 underline-offset-2">browse</button></span>
+          <span class="text-lg text-slate-600 ml-auto">capability statements, past-performance write-ups, diagrams</span>
+        </div>
+        <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-ref"></ul>
+      </div>
+
       <div class="bg-[#A34A34]/[0.06] border-2 border-[#A34A34]/40 rounded-xl p-4 mb-4">
         <div class="flex items-center gap-2 mb-1.5 flex-wrap">
           <span class="font-display font-semibold text-2xl text-slate-900">Private RFI/RFP Archive</span>
@@ -539,7 +549,7 @@
 
           <div class="flex gap-2 items-center flex-wrap mt-2.5 pt-2.5 border-t-2 border-slate-200">
             <select id="archive-upload-target" class="bg-slate-50 border-2 border-slate-300 rounded-lg px-3 py-2 text-lg">
-              <option value="">📁 No folder (top level)</option>
+              <option value="">📁 No folder</option>
             </select>
             <input type="file" id="archive-upload-input" class="text-lg flex-1 min-w-[180px]">
             <button type="button" id="archive-upload-btn" class="bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap">Upload File</button>
@@ -552,16 +562,6 @@
         <div id="private-archive-empty" hidden class="text-lg text-slate-600">No files found in <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">private-rfi-archive/</code> yet. Drop files into that folder on disk, then reload this page.</div>
         <div id="private-archive-unavailable" hidden class="text-lg text-slate-600">Not available here — this only works when the site is running locally via <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">python3 serve_no_cache.py</code>, not on the deployed Pages site.</div>
         <ul id="private-archive-list" hidden class="flex flex-col gap-1.5"></ul>
-      </div>
-
-      <div class="upload-zone border-2 border-dashed border-[#7A5C3E]/40 hover:border-[#7A5C3E]/60 rounded-xl bg-[#7A5C3E]/[0.05] px-4 py-3 mb-4 cursor-pointer transition-colors" data-upload="ref">
-        <input type="file" id="file-ref" multiple hidden>
-        <div class="flex items-center gap-3 flex-wrap">
-          <span class="text-[#7A5C3E]">⇧</span>
-          <span class="text-lg"><strong class="font-semibold text-slate-800">Add a reference document</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#7A5C3E] font-bold underline decoration-2 underline-offset-2">browse</button></span>
-          <span class="text-lg text-slate-600 ml-auto">capability statements, past-performance write-ups, diagrams</span>
-        </div>
-        <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-ref"></ul>
       </div>
     </section>
 
@@ -1627,7 +1627,7 @@
       var topLevelFolderNames = folders
         .filter(function(f){ return f.split('/').filter(Boolean).length === 1; })
         .map(function(f){ return f.split('/').filter(Boolean)[0]; });
-      uploadTargetSelect.innerHTML = '<option value="">📁 No folder (top level)</option>';
+      uploadTargetSelect.innerHTML = '<option value="">📁 No folder</option>';
       topLevelFolderNames.forEach(function(name){
         var opt = document.createElement('option');
         opt.value = name;
