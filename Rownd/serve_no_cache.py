@@ -123,6 +123,12 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
         try:
             target = os.path.realpath(self.translate_path(self.path)).lower()
             archive = ARCHIVE_DIR.lower()
+            if target == archive:
+                # The top-level directory listing itself — names only,
+                # no content — is intentionally public. Everything past
+                # it (any file, any subfolder's own listing) still needs
+                # a login; only the outermost names are exempt.
+                return False
             return os.path.commonpath([target, archive]) == archive
         except Exception:
             # Fail closed: if this request's path can't be cleanly
@@ -145,7 +151,10 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
         self.send_header('Content-Type', 'text/plain')
         self.send_header('Content-Length', str(len(body)))
         self.end_headers()
-        self.wfile.write(body)
+        # HEAD responses report Content-Length as if a GET had happened,
+        # but must not actually include a body.
+        if self.command != 'HEAD':
+            self.wfile.write(body)
 
     def do_GET(self):
         if self._needs_auth() and not self._authorized():

@@ -519,17 +519,19 @@
         </button>
         <p id="archive-privacy-policy" hidden class="text-lg text-slate-700 mb-3 pl-3 border-l-4 border-[#A34A34]/30">Protected four ways: the folder is git-ignored (never committed, pushed, or deployed); it's <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">chmod 700</code> (only your OS user account can read it); the local server binds to 127.0.0.1 only, so nothing else on your network can reach it; and it's behind a real login enforced by that server (a session cookie set only after the password checks out server-side) — there's no page-level trick that bypasses it, because the check happens before the server ever responds.</p>
 
-        <div id="private-archive-loading" class="text-lg text-slate-500 font-mono">Checking for local files…</div>
-        <div id="private-archive-empty" hidden class="text-lg text-slate-600">No files found in <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">private-rfi-archive/</code> yet. Drop files into that folder on disk, then reload this page.</div>
-        <div id="private-archive-unavailable" hidden class="text-lg text-slate-600">Not available here — this only works when the site is running locally via <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">python3 serve_no_cache.py</code>, not on the deployed Pages site.</div>
-        <div id="private-archive-auth-needed" hidden class="bg-white border-2 border-slate-300 rounded-lg p-3">
-          <label class="block text-lg font-semibold text-slate-800 mb-1.5">Enter the archive password</label>
+        <div id="private-archive-auth-needed" class="bg-white border-2 border-slate-300 rounded-lg p-3 mb-3">
+          <label class="block text-lg font-semibold text-slate-800 mb-1.5">Log in to open files and see inside folders</label>
           <div class="flex gap-2 flex-wrap items-center">
             <input type="password" id="archive-pw-input" placeholder="Password" class="bg-slate-50 border-2 border-slate-300 rounded-lg px-3 py-2 text-lg">
             <button type="button" id="archive-pw-submit" class="bg-[#A34A34] hover:bg-[#8a3d2b] text-white font-semibold text-lg px-3.5 py-2 rounded-lg transition-colors">Unlock</button>
           </div>
           <p id="archive-pw-error" hidden class="text-lg text-[#A34A34] font-semibold mt-1.5">Wrong password.</p>
+          <p class="text-sm text-slate-500 mt-2 leading-relaxed">File and folder names below are visible without logging in — opening a file or a folder's contents requires this.</p>
         </div>
+
+        <div id="private-archive-loading" class="text-lg text-slate-500 font-mono">Checking for local files…</div>
+        <div id="private-archive-empty" hidden class="text-lg text-slate-600">No files found in <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">private-rfi-archive/</code> yet. Drop files into that folder on disk, then reload this page.</div>
+        <div id="private-archive-unavailable" hidden class="text-lg text-slate-600">Not available here — this only works when the site is running locally via <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">python3 serve_no_cache.py</code>, not on the deployed Pages site.</div>
         <ul id="private-archive-list" hidden class="flex flex-col gap-1.5"></ul>
 
         <div id="private-archive-new-folder" hidden class="flex gap-2 items-center flex-wrap mt-3 pt-3 border-t-2 border-slate-200">
@@ -1551,7 +1553,15 @@
   async function walkArchiveDir(relPath, depth, folderAccumulator){
     if (depth > MAX_ARCHIVE_DEPTH) return [];
     var res = await fetch('private-rfi-archive/' + relPath);
-    if (res.status === 403) { var authErr = new Error('auth required'); authErr.authRequired = true; throw authErr; }
+    if (res.status === 403) {
+      // The top-level listing (depth 0) is public — the server only
+      // 403s a nested folder's own listing, meaning "you can see this
+      // folder exists (its name already came from the parent listing
+      // that succeeded), but not what's inside it without logging in."
+      // That's a partial result, not a reason to blank the whole page.
+      if (depth === 0) { var authErr = new Error('auth required'); authErr.authRequired = true; throw authErr; }
+      return [];
+    }
     if (!res.ok) {
       if (depth === 0) { var notFoundErr = new Error('not found'); notFoundErr.notFound = true; throw notFoundErr; }
       return [];
@@ -1580,18 +1590,19 @@
     var authNeededEl = document.getElementById('private-archive-auth-needed');
     var listEl = document.getElementById('private-archive-list');
     var newFolderEl = document.getElementById('private-archive-new-folder');
-    authNeededEl.hidden = true;
     try {
-      // The server (serve_no_cache.py) denies these with a plain 403 until
-      // the archive-login form below has set a session cookie — the
-      // browser then attaches that cookie automatically to every request
-      // here and to the file links themselves, no per-request work needed.
+      // The top-level listing (depth 0) is public — names only, no
+      // login needed just to see what's there. Opening a file or
+      // looking inside a subfolder still needs the session cookie the
+      // archive-login form below sets; walkArchiveDir treats a 403 on
+      // those as "folder exists, contents locked" rather than failing
+      // the whole listing.
       var folders = [];
       var names = (await walkArchiveDir('', 0, folders)).sort();
       folders.sort();
 
       loadingEl.hidden = true;
-      newFolderEl.hidden = false; // reaching here means we're authenticated
+      newFolderEl.hidden = false;
       if (!names.length && !folders.length) { emptyEl.hidden = false; unavailableEl.hidden = true; listEl.hidden = true; return; }
 
       emptyEl.hidden = true;
@@ -1645,6 +1656,13 @@
       await mapWithConcurrencyLimit(rows, ARCHIVE_FETCH_CONCURRENCY, async function(row){
         try {
           var headRes = await fetch(row.href, {method: 'HEAD'});
+          // A 403 denial page has its own real Content-Length (the byte
+          // length of "Password required..."), which — without this
+          // check — got shown as if it were the file's own size. Found
+          // by chasing down a file that displayed "85 B" while logged
+          // out, which is suspiciously exactly the denial message's
+          // length, not any real file's.
+          if (!headRes.ok) return;
           var len = headRes.headers.get('Content-Length');
           if (len) {
             var sizeEl = document.createElement('span');
@@ -1677,6 +1695,7 @@
     if (res.ok) {
       errEl.hidden = true;
       archivePwInput.value = '';
+      document.getElementById('private-archive-auth-needed').hidden = true;
       loadPrivateArchive();
     } else {
       errEl.hidden = false;
