@@ -44,13 +44,32 @@ import secrets
 import socket
 import sys
 from getpass import getpass
+from urllib.parse import unquote
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 HASH_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.archive_auth_hash')
 ARCHIVE_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'private-rfi-archive'))
 LOGIN_PATH = '/archive-login'
 MKDIR_PATH = '/archive-mkdir'
+UPLOAD_PATH = '/archive-upload'
 SESSION_COOKIE_NAME = 'archive_session'
+MAX_UPLOAD_BYTES = 50 * 1024 * 1024
+
+
+def is_valid_segment_name(name):
+    # A single, plain path segment — no separators, no ".."/"." tricks,
+    # no leading dot (those are reserved for our own scaffolding, e.g.
+    # .gitkeep). This alone makes traversal outside ARCHIVE_DIR
+    # impossible for anything built from it; no need to double-check via
+    # realpath since the input can't contain a path separator at all.
+    return (
+        bool(name)
+        and '/' not in name
+        and '\\' not in name
+        and name not in ('.', '..')
+        and not name.startswith('.')
+        and len(name) <= 200
+    )
 
 
 def sha256_hex(text):
@@ -166,15 +185,15 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
             return self._deny()
         return super().do_HEAD()
 
-    def _read_bounded_body(self, max_len=4096):
+    def _read_bounded_bytes(self, max_len):
         # Shared by every POST endpoint here: validate Content-Length
         # before trusting it (a negative or absurd value fed straight to
         # rfile.read() previously hung the whole single-threaded server —
         # see the `timeout` attribute above for the general backstop, and
         # this bound for the immediate, specific case), and don't let a
         # client that stalls mid-body past the connection timeout escape
-        # as an uncaught exception. Returns the decoded string, or None
-        # if invalid — having already sent an error response itself.
+        # as an uncaught exception. Returns the raw bytes, or None if
+        # invalid — having already sent an error response itself.
         try:
             length = int(self.headers.get('Content-Length', 0))
         except ValueError:
@@ -183,10 +202,19 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
             self.send_error(400, 'Bad Content-Length')
             return None
         try:
-            return self.rfile.read(length).decode('utf-8', errors='replace')
+            return self.rfile.read(length)
         except socket.timeout:
             self.send_error(408, 'Request body timed out')
             return None
+
+    def _read_bounded_body(self, max_len=4096):
+        # Text variant for small form-ish fields (passwords, folder
+        # names) — NOT for file uploads, which need the exact bytes
+        # (decoding as UTF-8 would corrupt binary content like PDFs).
+        raw = self._read_bounded_bytes(max_len)
+        if raw is None:
+            return None
+        return raw.decode('utf-8', errors='replace')
 
     def _respond(self, status, body_text):
         body = body_text.encode('utf-8')
@@ -201,6 +229,8 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
             return self._handle_login()
         if self.path == MKDIR_PATH:
             return self._handle_mkdir()
+        if self.path == UPLOAD_PATH:
+            return self._handle_upload()
         self.send_error(501, 'Unsupported method (POST)')
 
     def _handle_login(self):
@@ -234,20 +264,7 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
         if name is None:
             return
         name = name.strip()
-        # A single, plain path segment only — no separators, no ".."/"."
-        # tricks, no leading dot (those are reserved for our own
-        # scaffolding, e.g. .gitkeep). This alone makes traversal outside
-        # ARCHIVE_DIR impossible; no need to double-check via realpath
-        # since the input can't contain a path separator at all.
-        valid = (
-            bool(name)
-            and '/' not in name
-            and '\\' not in name
-            and name not in ('.', '..')
-            and not name.startswith('.')
-            and len(name) <= 200
-        )
-        if not valid:
+        if not is_valid_segment_name(name):
             return self._respond(400, 'Invalid folder name.')
         target = os.path.join(ARCHIVE_DIR, name)
         try:
@@ -256,6 +273,42 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
             self._respond(409, 'A folder with that name already exists.')
         except (OSError, ValueError):
             self._respond(500, 'Could not create that folder.')
+        else:
+            self._respond(200, 'OK')
+
+    def _handle_upload(self):
+        # No login required, same reasoning as mkdir: adding a new file
+        # doesn't read or expose any EXISTING content in the archive —
+        # only opening a file that's already there does. The filename
+        # and (optional) target folder ride in headers rather than a
+        # multipart body, since this only ever needs to carry one file
+        # and one destination — no multipart parser needed for that.
+        # Client encodeURIComponent's these before sending — HTTP header
+        # values are ASCII-ish, so a filename/folder name with accents,
+        # an em-dash, non-Latin characters, etc. wouldn't survive raw.
+        file_name = unquote(self.headers.get('X-File-Name', ''))
+        folder_name = unquote(self.headers.get('X-Target-Folder', ''))
+        if not is_valid_segment_name(file_name):
+            return self._respond(400, 'Invalid file name.')
+        if folder_name and not is_valid_segment_name(folder_name):
+            return self._respond(400, 'Invalid target folder.')
+
+        target_dir = os.path.join(ARCHIVE_DIR, folder_name) if folder_name else ARCHIVE_DIR
+        if folder_name and not os.path.isdir(target_dir):
+            return self._respond(400, "That folder doesn't exist.")
+
+        data = self._read_bounded_bytes(MAX_UPLOAD_BYTES)
+        if data is None:
+            return
+
+        target_path = os.path.join(target_dir, file_name)
+        try:
+            with open(target_path, 'xb') as f:  # 'x' = fail if it already exists
+                f.write(data)
+        except FileExistsError:
+            self._respond(409, 'A file with that name already exists there.')
+        except (OSError, ValueError):
+            self._respond(500, 'Could not save that file.')
         else:
             self._respond(200, 'OK')
 
