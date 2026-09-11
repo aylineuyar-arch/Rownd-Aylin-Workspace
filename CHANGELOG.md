@@ -4,6 +4,10 @@ Every push to this repo is logged here, newest first, in plain language — what
 
 ## 2026-09-10
 
+- **Fixed a real size mismatch and de-duplicated the visual pattern between the two upload areas.** The per-folder "Upload File" button was 14px against every other button on the page at 18px — checked computed font sizes directly to confirm it before touching anything. Bumped it to match (18px, same padding as everywhere else). Also restyled the "no folder" upload row to use the exact same row treatment as a folder row (same border, padding, right-aligned button) instead of a differently-styled block above the list — same pattern repeated, not two different ones. Verified: all three buttons (Create Folder, the "no folder" Upload File, and the per-folder Upload File) now compute to identical 18px, and re-confirmed upload still works correctly after the style change.
+
+
+
 - **Removed the upload-destination dropdown; each folder gets its own right-aligned "Upload File" button on its row instead.** The generic "Upload File" control at the bottom now always targets no folder (no picker needed, since there's nothing to pick from there anymore). Both paths share one `uploadFile()` function. Verified: no dropdown element exists on the page anymore; the "test" folder's row has its own "Upload File" button; clicked it, picked a file, got the success confirmation, and confirmed the file landed inside `test/` on disk.
 
 
