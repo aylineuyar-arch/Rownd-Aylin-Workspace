@@ -4,6 +4,10 @@ Every push to this repo is logged here, newest first, in plain language — what
 
 ## 2026-09-10
 
+- **Private, local-only RFI/RFP archive** — previously-sent RFI/RFPs will be the basis for future generated proposals, and are highly sensitive, so they needed to live somewhere that's structurally impossible to push to this public repo. Added `Rownd/private-rfi-archive/` for real files, protected by a new root `.gitignore` (`Rownd/private-rfi-archive/*`, with only `.gitkeep`/`README.md` excepted so the folder itself stays discoverable). Verified directly: dropped a file with sensitive-looking content into the folder, confirmed `git status`/`git add -A` never sees it, confirmed `git check-ignore` matches it. Added a "Private RFI/RFP Archive" block to the Reference Documents page that lists whatever's actually in that folder (using the dev server's own auto-generated directory listing — no manifest file, no server code of ours) and links each file to open/preview it. On the deployed GitHub Pages site the folder doesn't exist, so this correctly shows an "unavailable" state instead of an error — verified both the empty-folder and populated-folder states, and confirmed a fetch to a nonexistent path 404s the way Pages will.
+
+
+
 - **Checklist text boxes now grow to fit their content — no internal scrollbar.** They previously had a fixed min-height with `resize-y`, so pasted or extraction-filled text beyond that height was hidden behind a scrollbar inside the box. Switched to auto-grow: each box's height now tracks its own content on every keystroke/paste, and also when extraction programmatically fills a box (Phase I text into Solicitation instructions, etc.), since that already dispatches the same `input` event. Verified with a long pasted block (grew to 9176px, no internal scroll) and with extraction-filled text (grew from 132px to 3156px automatically).
 
 ## 2026-09-09

@@ -1,0 +1,6 @@
+# Private local-only RFI/RFP archive — highly sensitive, must never be
+# committed or pushed. Keep the folder discoverable via .gitkeep/README.md,
+# but ignore every real file dropped into it.
+Rownd/private-rfi-archive/*
+!Rownd/private-rfi-archive/.gitkeep
+!Rownd/private-rfi-archive/README.md

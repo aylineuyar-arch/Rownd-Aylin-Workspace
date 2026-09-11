@@ -507,6 +507,19 @@
       <h1 class="font-display font-semibold text-5xl text-[#7A5C3E] mb-4">Reference Documents</h1>
       <p class="text-xl text-slate-600 mb-3.5">General-purpose reference material — capability statements, boilerplate paragraphs, diagrams — kept separate from Historic Submissions, which tracks actual submitted proposals and their outcomes.</p>
 
+      <div class="bg-[#A34A34]/[0.06] border-2 border-[#A34A34]/40 rounded-xl p-4 mb-4">
+        <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+          <span class="font-display font-semibold text-2xl text-slate-900">Private RFI/RFP Archive</span>
+          <span class="font-mono text-sm font-bold px-2.5 py-1 rounded-full bg-[#A34A34] text-white">LOCAL ONLY — never in this repo</span>
+        </div>
+        <p class="text-lg text-slate-700 mb-3">Previously-sent RFI/RFPs, dropped on disk into <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">Rownd/private-rfi-archive/</code> — the basis for future generated proposals. That folder is git-ignored and only readable while running the site locally; it's never committed, pushed, or deployed to the public Pages site.</p>
+
+        <div id="private-archive-loading" class="text-lg text-slate-500 font-mono">Checking for local files…</div>
+        <div id="private-archive-empty" hidden class="text-lg text-slate-600">No files found in <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">private-rfi-archive/</code> yet. Drop files into that folder on disk, then reload this page.</div>
+        <div id="private-archive-unavailable" hidden class="text-lg text-slate-600">Not available here — this only works when the site is running locally (<code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">python3 serve_no_cache.py</code>), not on the deployed Pages site.</div>
+        <ul id="private-archive-list" hidden class="flex flex-col gap-1.5"></ul>
+      </div>
+
       <div class="upload-zone border-2 border-dashed border-[#7A5C3E]/40 hover:border-[#7A5C3E]/60 rounded-xl bg-[#7A5C3E]/[0.05] px-4 py-3 mb-4 cursor-pointer transition-colors" data-upload="ref">
         <input type="file" id="file-ref" multiple hidden>
         <div class="flex items-center gap-3 flex-wrap">
@@ -1499,5 +1512,79 @@
   });
   window.addEventListener('dragover', function(e){ e.preventDefault(); });
   window.addEventListener('drop', function(e){ e.preventDefault(); });
+
+  // Private RFI/RFP archive: lists whatever's actually on disk in
+  // Rownd/private-rfi-archive/ (git-ignored, never part of the deployed
+  // site). Python's dev server auto-generates a directory-listing page for
+  // a folder with no index.html, so this just fetches that and parses out
+  // the real filenames — no manifest file, no server-side code of our own.
+  // On the deployed Pages site the folder doesn't exist, so the fetch
+  // 404s and this correctly falls back to the "not available" state.
+  function formatFileSize(bytes){
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+  }
+  async function loadPrivateArchive(){
+    var loadingEl = document.getElementById('private-archive-loading');
+    var emptyEl = document.getElementById('private-archive-empty');
+    var unavailableEl = document.getElementById('private-archive-unavailable');
+    var listEl = document.getElementById('private-archive-list');
+    try {
+      var res = await fetch('private-rfi-archive/');
+      if (!res.ok) throw new Error('not found');
+      var html = await res.text();
+      var doc = new DOMParser().parseFromString(html, 'text/html');
+      var names = Array.from(doc.querySelectorAll('a'))
+        .map(function(a){ return decodeURIComponent(a.getAttribute('href') || ''); })
+        .filter(function(name){
+          var lower = name.toLowerCase();
+          return name && name !== '../' && name.indexOf('.gitkeep') === -1 && lower !== 'readme.md';
+        })
+        .sort();
+
+      loadingEl.hidden = true;
+      if (!names.length) { emptyEl.hidden = false; unavailableEl.hidden = true; listEl.hidden = true; return; }
+
+      emptyEl.hidden = true;
+      unavailableEl.hidden = true;
+      listEl.hidden = false;
+      listEl.innerHTML = '';
+
+      for (var i = 0; i < names.length; i++) {
+        var name = names[i];
+        var li = document.createElement('li');
+        li.className = 'flex items-center gap-2 bg-white border-2 border-slate-300 rounded-md px-2.5 py-1.5 text-lg';
+        var ext = (name.split('.').pop() || 'file').toUpperCase().slice(0, 4);
+        var extEl = document.createElement('span');
+        extEl.className = 'font-mono text-sm font-bold text-white bg-[#A34A34] px-1.5 rounded';
+        extEl.textContent = ext;
+        var link = document.createElement('a');
+        link.href = 'private-rfi-archive/' + encodeURIComponent(name);
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.className = 'flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[#7A5C3E] font-semibold underline decoration-2 underline-offset-2';
+        link.textContent = name;
+        li.append(extEl, link);
+        try {
+          var headRes = await fetch('private-rfi-archive/' + encodeURIComponent(name), {method: 'HEAD'});
+          var len = headRes.headers.get('Content-Length');
+          if (len) {
+            var sizeEl = document.createElement('span');
+            sizeEl.className = 'text-slate-500 font-mono text-lg';
+            sizeEl.textContent = formatFileSize(parseInt(len, 10));
+            li.appendChild(sizeEl);
+          }
+        } catch (e) { /* size is a nice-to-have, not required */ }
+        listEl.appendChild(li);
+      }
+    } catch (err) {
+      loadingEl.hidden = true;
+      emptyEl.hidden = true;
+      listEl.hidden = true;
+      unavailableEl.hidden = false;
+    }
+  }
+  loadPrivateArchive();
 })();
 </script>
