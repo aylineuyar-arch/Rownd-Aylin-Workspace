@@ -4,6 +4,10 @@ Every push to this repo is logged here, newest first, in plain language — what
 
 ## 2026-09-10
 
+- **Simplified the folder/upload flow: icon instead of a badge, no trailing slash, upload button right on the folder itself** — replaced the "FOLDER" text badge with a 📁 icon and dropped the trailing slash from displayed folder names (was reading as a stray character, not a real part of the name). Removed the separate folder-picker dropdown entirely; instead, every top-level folder now has its own inline "Upload here" button directly on its row — click it, pick a file, done, no separate selection step. The generic "Upload File" control at the bottom still exists for uploads with no folder. Both paths share one `uploadFile()` function instead of two near-duplicate copies. Verified end-to-end: created a folder, saw it with the icon and its own upload button, clicked it, picked a file, and confirmed it landed in the right folder on disk.
+
+
+
 - **Fixed confusing labels: "DIR" → "FOLDER", "Root" → "No folder (top level)"** — no functional change, "test/" was already a real, working folder and was already selectable in the upload dropdown; the labels just used unfamiliar technical shorthand ("DIR" for directory, "Root" for the archive's own top level) instead of plain language.
 
 

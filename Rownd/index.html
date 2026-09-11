@@ -542,9 +542,7 @@
           <p id="archive-folder-error" hidden class="text-lg text-[#A34A34] font-semibold mt-1.5"></p>
 
           <div class="flex gap-2 items-center flex-wrap mt-2.5">
-            <select id="archive-upload-target" class="bg-slate-50 border-2 border-slate-300 rounded-lg px-3 py-2 text-lg">
-              <option value="">— No folder (top level) —</option>
-            </select>
+            <span class="text-lg text-slate-600 whitespace-nowrap">📁 Upload here (no folder):</span>
             <input type="file" id="archive-upload-input" class="text-lg flex-1 min-w-[180px]">
             <button type="button" id="archive-upload-btn" class="bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap">Upload File</button>
           </div>
@@ -1615,25 +1613,6 @@
       loadingEl.hidden = true;
       manageEl.hidden = false;
 
-      // Keep the upload-destination dropdown in sync with whatever
-      // folders actually exist right now — create one with Create
-      // Folder and it's immediately pickable as an upload target, no
-      // separate refresh step. Only top-level folders, matching what
-      // /archive-upload (and /archive-mkdir) actually support.
-      var uploadTargetSelect = document.getElementById('archive-upload-target');
-      var previousSelection = uploadTargetSelect.value;
-      var topLevelFolderNames = folders
-        .filter(function(f){ return f.split('/').filter(Boolean).length === 1; })
-        .map(function(f){ return f.split('/').filter(Boolean)[0]; });
-      uploadTargetSelect.innerHTML = '<option value="">— No folder (top level) —</option>';
-      topLevelFolderNames.forEach(function(name){
-        var opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = name + '/';
-        uploadTargetSelect.appendChild(opt);
-      });
-      if (topLevelFolderNames.indexOf(previousSelection) !== -1) uploadTargetSelect.value = previousSelection;
-
       if (!names.length && !folders.length) { emptyEl.hidden = false; unavailableEl.hidden = true; listEl.hidden = true; return; }
 
       emptyEl.hidden = true;
@@ -1645,19 +1624,38 @@
       // visible — real confirmation Create Folder worked, not silence),
       // then files. Folders link to their own directory listing instead
       // of a HEAD-checked size, since "size" doesn't mean anything for one.
+      // Each top-level folder gets its own inline "Upload here" button —
+      // simpler than a separate dropdown to pick a folder before uploading.
       folders.forEach(function(folderPath){
         var li = document.createElement('li');
         li.className = 'flex items-center gap-2 bg-white border-2 border-slate-300 rounded-md px-2.5 py-1.5 text-lg';
-        var dirEl = document.createElement('span');
-        dirEl.className = 'font-mono text-sm font-bold text-white bg-slate-500 px-1.5 rounded';
-        dirEl.textContent = 'FOLDER';
+        var iconEl = document.createElement('span');
+        iconEl.textContent = '📁';
+        iconEl.setAttribute('aria-hidden', 'true');
+        var segments = folderPath.split('/').filter(Boolean);
         var link = document.createElement('a');
-        link.href = 'private-rfi-archive/' + folderPath.split('/').filter(Boolean).map(encodeURIComponent).join('/') + '/';
+        link.href = 'private-rfi-archive/' + segments.map(encodeURIComponent).join('/') + '/';
         link.target = '_blank';
         link.rel = 'noopener';
         link.className = 'flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-slate-700 font-semibold underline decoration-2 underline-offset-2';
-        link.textContent = folderPath; // e.g. "SBIR-25-101/"
-        li.append(dirEl, link);
+        link.textContent = segments.join('/'); // e.g. "SBIR-25-101" — no trailing slash
+        li.append(iconEl, link);
+
+        // Upload only supports one folder level deep (matching
+        // /archive-upload and /archive-mkdir), so the inline button is
+        // only offered for top-level folders.
+        if (segments.length === 1) {
+          var folderUploadInput = document.createElement('input');
+          folderUploadInput.type = 'file';
+          folderUploadInput.hidden = true;
+          var folderUploadBtn = document.createElement('button');
+          folderUploadBtn.type = 'button';
+          folderUploadBtn.className = 'bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-sm font-semibold px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap';
+          folderUploadBtn.textContent = 'Upload here';
+          folderUploadBtn.addEventListener('click', function(){ folderUploadInput.click(); });
+          folderUploadInput.addEventListener('change', function(){ uploadFile(folderUploadInput.files[0], segments[0]); });
+          li.append(folderUploadBtn, folderUploadInput);
+        }
         listEl.appendChild(li);
       });
 
@@ -1757,14 +1755,11 @@
   });
 
   // Upload sends the raw file bytes as the body — no multipart needed
-  // for a single file — with the filename and chosen destination folder
-  // (populated above from whatever folders currently exist, including
-  // one just created with Create Folder) riding along as headers.
-  var archiveUploadInput = document.getElementById('archive-upload-input');
-  var archiveUploadTarget = document.getElementById('archive-upload-target');
-  var archiveUploadBtn = document.getElementById('archive-upload-btn');
-  archiveUploadBtn.addEventListener('click', async function(){
-    var file = archiveUploadInput.files[0];
+  // for a single file — with the filename and destination folder riding
+  // along as headers. Shared by the top-level "Upload File" button and
+  // every folder's own inline "Upload here" button, so there's one
+  // upload path instead of two nearly-identical copies.
+  async function uploadFile(file, folderName){
     var errEl = document.getElementById('archive-upload-error');
     if (!file) return;
     var res = await fetch('/archive-upload', {
@@ -1774,18 +1769,24 @@
         // folder name with accents, an em-dash, non-Latin characters,
         // etc. survives the trip instead of being mangled or rejected.
         'X-File-Name': encodeURIComponent(file.name),
-        'X-Target-Folder': encodeURIComponent(archiveUploadTarget.value)
+        'X-Target-Folder': encodeURIComponent(folderName || '')
       },
       body: file
     });
     if (res.ok) {
       errEl.hidden = true;
-      archiveUploadInput.value = '';
       loadPrivateArchive();
     } else {
       errEl.textContent = await res.text();
       errEl.hidden = false;
     }
+  }
+
+  var archiveUploadInput = document.getElementById('archive-upload-input');
+  var archiveUploadBtn = document.getElementById('archive-upload-btn');
+  archiveUploadBtn.addEventListener('click', function(){
+    uploadFile(archiveUploadInput.files[0], '');
+    archiveUploadInput.value = '';
   });
 
   loadPrivateArchive();
