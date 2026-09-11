@@ -549,7 +549,7 @@
 
           <div class="flex gap-2 items-center flex-wrap mt-2.5 pt-2.5 border-t-2 border-slate-200">
             <select id="archive-upload-target" class="bg-slate-50 border-2 border-slate-300 rounded-lg px-3 py-2 text-lg">
-              <option value="">📁 No folder</option>
+              <option value="">No folder</option>
             </select>
             <input type="file" id="archive-upload-input" class="text-lg flex-1 min-w-[180px]">
             <button type="button" id="archive-upload-btn" class="bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap">Upload File</button>
@@ -1627,11 +1627,11 @@
       var topLevelFolderNames = folders
         .filter(function(f){ return f.split('/').filter(Boolean).length === 1; })
         .map(function(f){ return f.split('/').filter(Boolean)[0]; });
-      uploadTargetSelect.innerHTML = '<option value="">📁 No folder</option>';
+      uploadTargetSelect.innerHTML = '<option value="">No folder</option>';
       topLevelFolderNames.forEach(function(name){
         var opt = document.createElement('option');
         opt.value = name;
-        opt.textContent = '📁 ' + name;
+        opt.textContent = name;
         uploadTargetSelect.appendChild(opt);
       });
       if (topLevelFolderNames.indexOf(previousSelection) !== -1) uploadTargetSelect.value = previousSelection;
@@ -1650,9 +1650,19 @@
       folders.forEach(function(folderPath){
         var li = document.createElement('li');
         li.className = 'flex items-center gap-2 bg-white border-2 border-slate-300 rounded-md px-2.5 py-1.5 text-lg';
-        var iconEl = document.createElement('span');
-        iconEl.textContent = '📁';
+        // A plain SVG folder shape, not the 📁 emoji — that emoji's
+        // diagonal corner-fold rendered ambiguously enough to be read
+        // as a stray backslash in the folder name.
+        var iconEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        iconEl.setAttribute('viewBox', '0 0 20 16');
+        iconEl.setAttribute('width', '20');
+        iconEl.setAttribute('height', '16');
+        iconEl.setAttribute('fill', 'currentColor');
         iconEl.setAttribute('aria-hidden', 'true');
+        iconEl.setAttribute('class', 'text-slate-500 flex-shrink-0');
+        var iconPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        iconPath.setAttribute('d', 'M1 3a1 1 0 0 1 1-1h4.5l1.5 2H18a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3z');
+        iconEl.appendChild(iconPath);
         var segments = folderPath.split('/').filter(Boolean);
         var link = document.createElement('a');
         link.href = 'private-rfi-archive/' + segments.map(encodeURIComponent).join('/') + '/';

@@ -4,6 +4,10 @@ Every push to this repo is logged here, newest first, in plain language — what
 
 ## 2026-09-10
 
+- **Replaced the folder emoji with a real SVG icon — the emoji's own diagonal corner-fold was reading as a stray backslash in the name.** The folder listing now uses a small inline SVG folder shape instead of 📁; the upload-destination dropdown drops the icon entirely since `<option>` elements can only render plain text (no image/SVG is possible there regardless), so its options are now just plain names ("No folder", "test") with nothing that could look like a stray character. Verified: the folder row's text content is exactly the folder name with no extra characters, and an actual `<svg>` element renders next to it.
+
+
+
 - **Fixed confusing layout/wording; clarified a false "folders get deleted on reload" impression that was actually my own test-cleanup habit, not a real bug.** The app has never deleted anything on its own — it only ever reads what's on disk — but I'd been creating test folders during verification (including one literally named "test") and deleting them between turns without realizing the user was seeing them persist across several turns and reasonably assuming they were real. Verified concretely this time: killed and fully restarted the server with zero filesystem changes, reloaded the page, confirmed the folder was still there — proving persistence has nothing to do with reloads. Also: dropped the confusing "(top level)" phrase from the upload dropdown's default option (now just "No folder"), and moved the "Add a reference document" upload zone above the Private RFI/RFP Archive box instead of below it, since it's a separate, simpler, unrelated feature that doesn't need to be buried under the archive's own controls.
 
 
