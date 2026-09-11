@@ -4,6 +4,10 @@ Every push to this repo is logged here, newest first, in plain language — what
 
 ## 2026-09-10
 
+- **Removed the "No folder" upload row entirely; restyled "Add a reference document" to stand out** — solid teal border/background instead of the dashed brown it had, bumped text size and darkened the heading, so it doesn't visually recede against the archive box's reddish tint now that it sits inside it. Uploading into a specific folder still works via each folder's own inline button; there's no dedicated "no folder" upload path through the app anymore (Finder still works for that, same as folder creation originally did before that got its own button too). Removed the now-orphaned JS wiring for the deleted button/input so nothing references missing elements. Verified: no console errors on load beyond the expected 403s for not-yet-logged-in file access, the "No folder" row's elements are gone from the DOM, "Add a reference document" carries the new teal styling, and per-folder upload still works end-to-end.
+
+
+
 - **Moved "Add a reference document" to sit between the login box and Create Folder**, inside the Private RFI/RFP Archive box (it was above the whole box before). Order is now: title/description/privacy policy → Log in to open files → Add a reference document → Create Folder / Upload → the listing. Verified the new DOM order directly.
 
 

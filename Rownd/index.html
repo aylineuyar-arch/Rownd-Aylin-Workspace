@@ -529,11 +529,11 @@
           <p class="text-sm text-slate-500 mt-2 leading-relaxed">File and folder names below are visible without logging in — opening a file or a folder's contents requires this.</p>
         </div>
 
-        <div class="upload-zone border-2 border-dashed border-[#7A5C3E]/40 hover:border-[#7A5C3E]/60 rounded-xl bg-[#7A5C3E]/[0.05] px-4 py-3 mb-3 cursor-pointer transition-colors" data-upload="ref">
+        <div class="upload-zone border-2 border-[#2E615F] bg-[#2E615F]/[0.08] hover:bg-[#2E615F]/[0.14] rounded-xl px-4 py-3 mb-3 cursor-pointer transition-colors" data-upload="ref">
           <input type="file" id="file-ref" multiple hidden>
           <div class="flex items-center gap-3 flex-wrap">
-            <span class="text-[#7A5C3E]">⇧</span>
-            <span class="text-lg"><strong class="font-semibold text-slate-800">Add a reference document</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#7A5C3E] font-bold underline decoration-2 underline-offset-2">browse</button></span>
+            <span class="text-[#2E615F] text-xl">⇧</span>
+            <span class="text-xl"><strong class="font-semibold text-slate-900">Add a reference document</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#2E615F] font-bold underline decoration-2 underline-offset-2">browse</button></span>
             <span class="text-lg text-slate-600 ml-auto">capability statements, past-performance write-ups, diagrams</span>
           </div>
           <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-ref"></ul>
@@ -546,12 +546,6 @@
           </div>
           <p id="archive-folder-error" hidden class="text-lg text-[#A34A34] font-semibold mt-1.5"></p>
           <p id="archive-folder-success" hidden class="text-lg text-[#3F6647] font-semibold mt-1.5">✓ Folder created</p>
-
-          <div class="flex items-center gap-2 bg-white border-2 border-slate-300 rounded-md px-2.5 py-1.5 text-lg mt-2.5">
-            <span class="text-slate-600 whitespace-nowrap">No folder</span>
-            <input type="file" id="archive-upload-input" class="text-lg flex-1 min-w-0">
-            <button type="button" id="archive-upload-btn" class="ml-auto bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap flex-shrink-0">Upload File</button>
-          </div>
           <p id="archive-upload-error" hidden class="text-lg text-[#A34A34] font-semibold mt-1.5"></p>
           <p id="archive-upload-success" hidden class="text-lg text-[#3F6647] font-semibold mt-1.5">✓ File uploaded successfully</p>
         </div>
@@ -1802,13 +1796,6 @@
       errEl.hidden = false;
     }
   }
-
-  var archiveUploadInput = document.getElementById('archive-upload-input');
-  var archiveUploadBtn = document.getElementById('archive-upload-btn');
-  archiveUploadBtn.addEventListener('click', function(){
-    uploadFile(archiveUploadInput.files[0], '');
-    archiveUploadInput.value = '';
-  });
 
   loadPrivateArchive();
 })();
