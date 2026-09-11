@@ -4,6 +4,10 @@ Every push to this repo is logged here, newest first, in plain language — what
 
 ## 2026-09-10
 
+- **Removed the three fake placeholder documents from Reference Documents** — "Company Capability Statement," "Embedded Systems Architecture Diagram," and "Past Performance Boilerplate" were leftover static mock content from the original UI mockup, sitting right below the real Private RFI/RFP Archive panel and easy to mistake for real data. The reference-upload zone above them is untouched. Verified via the sandbox: all three are gone from the page text, the archive panel and upload zone both still render.
+
+
+
 - **Private archive: collapsible privacy policy, and real folder support.** The always-visible security explanation on the archive panel was pushed behind a "View privacy policy" toggle (same chevron pattern used elsewhere), leaving just a one-line description visible by default. Separately, the listing only ever looked at the top level of `private-rfi-archive/`, so a file organized into a subfolder was invisible — create folders however you like on disk (Finder's "New Folder" works fine, no new upload code needed) and the app now recurses into them (`walkArchiveDir`, capped at 6 levels deep) and lists every file it finds with its folder path shown (e.g. `SBIR-25-101/company-response.pdf`), instead of only what's sitting loose at the root. Verified with a real nested test file: confirmed the server's auth still covers the nested path with no code changes needed (containment check from the last fix already generalized correctly), and confirmed the recursive walk found both the top-level and nested file with a correctly-encoded, working link to each.
 
 
