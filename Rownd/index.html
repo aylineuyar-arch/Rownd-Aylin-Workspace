@@ -529,25 +529,29 @@
           <p class="text-sm text-slate-500 mt-2 leading-relaxed">File and folder names below are visible without logging in — opening a file or a folder's contents requires this.</p>
         </div>
 
-        <div id="private-archive-loading" class="text-lg text-slate-500 font-mono">Checking for local files…</div>
-        <div id="private-archive-empty" hidden class="text-lg text-slate-600">No files found in <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">private-rfi-archive/</code> yet. Drop files into that folder on disk, then reload this page.</div>
-        <div id="private-archive-unavailable" hidden class="text-lg text-slate-600">Not available here — this only works when the site is running locally via <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">python3 serve_no_cache.py</code>, not on the deployed Pages site.</div>
-        <ul id="private-archive-list" hidden class="flex flex-col gap-1.5"></ul>
-
-        <div id="private-archive-manage" hidden class="mt-3 pt-3 border-t-2 border-slate-200">
+        <div id="private-archive-manage" hidden class="bg-white border-2 border-slate-300 rounded-lg p-3 mb-3">
           <div class="flex gap-2 items-center flex-wrap">
             <input type="text" id="archive-folder-name" placeholder="New folder name" class="bg-slate-50 border-2 border-slate-300 rounded-lg px-3 py-2 text-lg flex-1 min-w-0">
             <button type="button" id="archive-folder-create-btn" class="bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap">Create Folder</button>
           </div>
           <p id="archive-folder-error" hidden class="text-lg text-[#A34A34] font-semibold mt-1.5"></p>
+          <p id="archive-folder-success" hidden class="text-lg text-[#3F6647] font-semibold mt-1.5">✓ Folder created</p>
 
-          <div class="flex gap-2 items-center flex-wrap mt-2.5">
-            <span class="text-lg text-slate-600 whitespace-nowrap">📁 Upload here (no folder):</span>
+          <div class="flex gap-2 items-center flex-wrap mt-2.5 pt-2.5 border-t-2 border-slate-200">
+            <select id="archive-upload-target" class="bg-slate-50 border-2 border-slate-300 rounded-lg px-3 py-2 text-lg">
+              <option value="">📁 No folder (top level)</option>
+            </select>
             <input type="file" id="archive-upload-input" class="text-lg flex-1 min-w-[180px]">
             <button type="button" id="archive-upload-btn" class="bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap">Upload File</button>
           </div>
           <p id="archive-upload-error" hidden class="text-lg text-[#A34A34] font-semibold mt-1.5"></p>
+          <p id="archive-upload-success" hidden class="text-lg text-[#3F6647] font-semibold mt-1.5">✓ File uploaded successfully</p>
         </div>
+
+        <div id="private-archive-loading" class="text-lg text-slate-500 font-mono">Checking for local files…</div>
+        <div id="private-archive-empty" hidden class="text-lg text-slate-600">No files found in <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">private-rfi-archive/</code> yet. Drop files into that folder on disk, then reload this page.</div>
+        <div id="private-archive-unavailable" hidden class="text-lg text-slate-600">Not available here — this only works when the site is running locally via <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">python3 serve_no_cache.py</code>, not on the deployed Pages site.</div>
+        <ul id="private-archive-list" hidden class="flex flex-col gap-1.5"></ul>
       </div>
 
       <div class="upload-zone border-2 border-dashed border-[#7A5C3E]/40 hover:border-[#7A5C3E]/60 rounded-xl bg-[#7A5C3E]/[0.05] px-4 py-3 mb-4 cursor-pointer transition-colors" data-upload="ref">
@@ -1613,6 +1617,25 @@
       loadingEl.hidden = true;
       manageEl.hidden = false;
 
+      // Keep the upload-destination dropdown in sync with whatever
+      // top-level folders actually exist right now — create one with
+      // Create Folder and it's immediately pickable here, no separate
+      // refresh step. One shared upload control (not one per folder)
+      // is the whole point of consolidating this.
+      var uploadTargetSelect = document.getElementById('archive-upload-target');
+      var previousSelection = uploadTargetSelect.value;
+      var topLevelFolderNames = folders
+        .filter(function(f){ return f.split('/').filter(Boolean).length === 1; })
+        .map(function(f){ return f.split('/').filter(Boolean)[0]; });
+      uploadTargetSelect.innerHTML = '<option value="">📁 No folder (top level)</option>';
+      topLevelFolderNames.forEach(function(name){
+        var opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = '📁 ' + name;
+        uploadTargetSelect.appendChild(opt);
+      });
+      if (topLevelFolderNames.indexOf(previousSelection) !== -1) uploadTargetSelect.value = previousSelection;
+
       if (!names.length && !folders.length) { emptyEl.hidden = false; unavailableEl.hidden = true; listEl.hidden = true; return; }
 
       emptyEl.hidden = true;
@@ -1624,8 +1647,6 @@
       // visible — real confirmation Create Folder worked, not silence),
       // then files. Folders link to their own directory listing instead
       // of a HEAD-checked size, since "size" doesn't mean anything for one.
-      // Each top-level folder gets its own inline "Upload here" button —
-      // simpler than a separate dropdown to pick a folder before uploading.
       folders.forEach(function(folderPath){
         var li = document.createElement('li');
         li.className = 'flex items-center gap-2 bg-white border-2 border-slate-300 rounded-md px-2.5 py-1.5 text-lg';
@@ -1640,22 +1661,6 @@
         link.className = 'flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-slate-700 font-semibold underline decoration-2 underline-offset-2';
         link.textContent = segments.join('/'); // e.g. "SBIR-25-101" — no trailing slash
         li.append(iconEl, link);
-
-        // Upload only supports one folder level deep (matching
-        // /archive-upload and /archive-mkdir), so the inline button is
-        // only offered for top-level folders.
-        if (segments.length === 1) {
-          var folderUploadInput = document.createElement('input');
-          folderUploadInput.type = 'file';
-          folderUploadInput.hidden = true;
-          var folderUploadBtn = document.createElement('button');
-          folderUploadBtn.type = 'button';
-          folderUploadBtn.className = 'bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-sm font-semibold px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap';
-          folderUploadBtn.textContent = 'Upload here';
-          folderUploadBtn.addEventListener('click', function(){ folderUploadInput.click(); });
-          folderUploadInput.addEventListener('change', function(){ uploadFile(folderUploadInput.files[0], segments[0]); });
-          li.append(folderUploadBtn, folderUploadInput);
-        }
         listEl.appendChild(li);
       });
 
@@ -1734,6 +1739,14 @@
     if (e.key === 'Enter') archivePwSubmit.click();
   });
 
+  // Same timed-confirmation pattern as "Saved to Drafts in Progress"
+  // elsewhere on this page: show it, then fade it out on its own.
+  function showTimedSuccess(el){
+    el.hidden = false;
+    clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(function(){ el.hidden = true; }, 2500);
+  }
+
   var archiveFolderInput = document.getElementById('archive-folder-name');
   var archiveFolderBtn = document.getElementById('archive-folder-create-btn');
   archiveFolderBtn.addEventListener('click', async function(){
@@ -1745,6 +1758,7 @@
       errEl.hidden = true;
       archiveFolderInput.value = '';
       loadPrivateArchive();
+      showTimedSuccess(document.getElementById('archive-folder-success'));
     } else {
       errEl.textContent = await res.text();
       errEl.hidden = false;
@@ -1755,11 +1769,14 @@
   });
 
   // Upload sends the raw file bytes as the body — no multipart needed
-  // for a single file — with the filename and destination folder riding
-  // along as headers. Shared by the top-level "Upload File" button and
-  // every folder's own inline "Upload here" button, so there's one
-  // upload path instead of two nearly-identical copies.
-  async function uploadFile(file, folderName){
+  // for a single file — with the filename and chosen destination folder
+  // (the dropdown above, kept in sync with whatever folders currently
+  // exist) riding along as headers.
+  var archiveUploadInput = document.getElementById('archive-upload-input');
+  var archiveUploadTarget = document.getElementById('archive-upload-target');
+  var archiveUploadBtn = document.getElementById('archive-upload-btn');
+  archiveUploadBtn.addEventListener('click', async function(){
+    var file = archiveUploadInput.files[0];
     var errEl = document.getElementById('archive-upload-error');
     if (!file) return;
     var res = await fetch('/archive-upload', {
@@ -1769,24 +1786,19 @@
         // folder name with accents, an em-dash, non-Latin characters,
         // etc. survives the trip instead of being mangled or rejected.
         'X-File-Name': encodeURIComponent(file.name),
-        'X-Target-Folder': encodeURIComponent(folderName || '')
+        'X-Target-Folder': encodeURIComponent(archiveUploadTarget.value)
       },
       body: file
     });
     if (res.ok) {
       errEl.hidden = true;
+      archiveUploadInput.value = '';
       loadPrivateArchive();
+      showTimedSuccess(document.getElementById('archive-upload-success'));
     } else {
       errEl.textContent = await res.text();
       errEl.hidden = false;
     }
-  }
-
-  var archiveUploadInput = document.getElementById('archive-upload-input');
-  var archiveUploadBtn = document.getElementById('archive-upload-btn');
-  archiveUploadBtn.addEventListener('click', function(){
-    uploadFile(archiveUploadInput.files[0], '');
-    archiveUploadInput.value = '';
   });
 
   loadPrivateArchive();
