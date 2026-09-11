@@ -36,7 +36,7 @@ from getpass import getpass
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 HASH_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.archive_auth_hash')
-PROTECTED_PREFIX = '/private-rfi-archive'
+ARCHIVE_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'private-rfi-archive'))
 
 
 def sha256_hex(text):
@@ -76,7 +76,24 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
         super().end_headers()
 
     def _needs_auth(self):
-        return self.path == PROTECTED_PREFIX or self.path.startswith(PROTECTED_PREFIX + '/')
+        # Resolve the request the SAME way the base class will actually
+        # resolve it (translate_path already URL-decodes and collapses
+        # ., .., and repeated slashes) before deciding whether it targets
+        # the archive — comparing against the raw request string instead
+        # is exactly what let /Private-RFI-Archive/... and
+        # /private-rfi-archive%2F... both slip past auth while still
+        # serving the real file (macOS's default filesystem is
+        # case-insensitive, and the encoded slash only got decoded AFTER
+        # a naive string check would have already said "not protected").
+        # Lowercased because os.path.normcase is a no-op on POSIX, even
+        # though the actual filesystem here resolves case-insensitively.
+        target = os.path.realpath(self.translate_path(self.path)).lower()
+        archive = ARCHIVE_DIR.lower()
+        try:
+            common = os.path.commonpath([target, archive])
+        except ValueError:
+            return False
+        return common == archive
 
     def _authorized(self):
         header = self.headers.get('Authorization', '')
