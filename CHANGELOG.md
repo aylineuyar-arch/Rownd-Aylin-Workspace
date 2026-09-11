@@ -4,6 +4,10 @@ Every push to this repo is logged here, newest first, in plain language — what
 
 ## 2026-09-10
 
+- **Removed the upload-destination dropdown; each folder gets its own right-aligned "Upload File" button on its row instead.** The generic "Upload File" control at the bottom now always targets no folder (no picker needed, since there's nothing to pick from there anymore). Both paths share one `uploadFile()` function. Verified: no dropdown element exists on the page anymore; the "test" folder's row has its own "Upload File" button; clicked it, picked a file, got the success confirmation, and confirmed the file landed inside `test/` on disk.
+
+
+
 - **Replaced the folder emoji with a real SVG icon — the emoji's own diagonal corner-fold was reading as a stray backslash in the name.** The folder listing now uses a small inline SVG folder shape instead of 📁; the upload-destination dropdown drops the icon entirely since `<option>` elements can only render plain text (no image/SVG is possible there regardless), so its options are now just plain names ("No folder", "test") with nothing that could look like a stray character. Verified: the folder row's text content is exactly the folder name with no extra characters, and an actual `<svg>` element renders next to it.
 
 
