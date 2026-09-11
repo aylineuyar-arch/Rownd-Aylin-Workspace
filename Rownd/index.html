@@ -543,7 +543,7 @@
 
           <div class="flex gap-2 items-center flex-wrap mt-2.5">
             <select id="archive-upload-target" class="bg-slate-50 border-2 border-slate-300 rounded-lg px-3 py-2 text-lg">
-              <option value="">— Root (private-rfi-archive/) —</option>
+              <option value="">— No folder (top level) —</option>
             </select>
             <input type="file" id="archive-upload-input" class="text-lg flex-1 min-w-[180px]">
             <button type="button" id="archive-upload-btn" class="bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap">Upload File</button>
@@ -1625,7 +1625,7 @@
       var topLevelFolderNames = folders
         .filter(function(f){ return f.split('/').filter(Boolean).length === 1; })
         .map(function(f){ return f.split('/').filter(Boolean)[0]; });
-      uploadTargetSelect.innerHTML = '<option value="">— Root (private-rfi-archive/) —</option>';
+      uploadTargetSelect.innerHTML = '<option value="">— No folder (top level) —</option>';
       topLevelFolderNames.forEach(function(name){
         var opt = document.createElement('option');
         opt.value = name;
@@ -1650,7 +1650,7 @@
         li.className = 'flex items-center gap-2 bg-white border-2 border-slate-300 rounded-md px-2.5 py-1.5 text-lg';
         var dirEl = document.createElement('span');
         dirEl.className = 'font-mono text-sm font-bold text-white bg-slate-500 px-1.5 rounded';
-        dirEl.textContent = 'DIR';
+        dirEl.textContent = 'FOLDER';
         var link = document.createElement('a');
         link.href = 'private-rfi-archive/' + folderPath.split('/').filter(Boolean).map(encodeURIComponent).join('/') + '/';
         link.target = '_blank';
