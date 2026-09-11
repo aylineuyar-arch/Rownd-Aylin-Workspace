@@ -507,16 +507,6 @@
       <h1 class="font-display font-semibold text-5xl text-[#7A5C3E] mb-4">Reference Documents</h1>
       <p class="text-xl text-slate-600 mb-3.5">General-purpose reference material — capability statements, boilerplate paragraphs, diagrams — kept separate from Historic Submissions, which tracks actual submitted proposals and their outcomes.</p>
 
-      <div class="upload-zone border-2 border-dashed border-[#7A5C3E]/40 hover:border-[#7A5C3E]/60 rounded-xl bg-[#7A5C3E]/[0.05] px-4 py-3 mb-4 cursor-pointer transition-colors" data-upload="ref">
-        <input type="file" id="file-ref" multiple hidden>
-        <div class="flex items-center gap-3 flex-wrap">
-          <span class="text-[#7A5C3E]">⇧</span>
-          <span class="text-lg"><strong class="font-semibold text-slate-800">Add a reference document</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#7A5C3E] font-bold underline decoration-2 underline-offset-2">browse</button></span>
-          <span class="text-lg text-slate-600 ml-auto">capability statements, past-performance write-ups, diagrams</span>
-        </div>
-        <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-ref"></ul>
-      </div>
-
       <div class="bg-[#A34A34]/[0.06] border-2 border-[#A34A34]/40 rounded-xl p-4 mb-4">
         <div class="flex items-center gap-2 mb-1.5 flex-wrap">
           <span class="font-display font-semibold text-2xl text-slate-900">Private RFI/RFP Archive</span>
@@ -537,6 +527,16 @@
           </div>
           <p id="archive-pw-error" hidden class="text-lg text-[#A34A34] font-semibold mt-1.5">Wrong password.</p>
           <p class="text-sm text-slate-500 mt-2 leading-relaxed">File and folder names below are visible without logging in — opening a file or a folder's contents requires this.</p>
+        </div>
+
+        <div class="upload-zone border-2 border-dashed border-[#7A5C3E]/40 hover:border-[#7A5C3E]/60 rounded-xl bg-[#7A5C3E]/[0.05] px-4 py-3 mb-3 cursor-pointer transition-colors" data-upload="ref">
+          <input type="file" id="file-ref" multiple hidden>
+          <div class="flex items-center gap-3 flex-wrap">
+            <span class="text-[#7A5C3E]">⇧</span>
+            <span class="text-lg"><strong class="font-semibold text-slate-800">Add a reference document</strong> <span class="text-slate-600">or</span> <button type="button" class="link-btn text-[#7A5C3E] font-bold underline decoration-2 underline-offset-2">browse</button></span>
+            <span class="text-lg text-slate-600 ml-auto">capability statements, past-performance write-ups, diagrams</span>
+          </div>
+          <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-ref"></ul>
         </div>
 
         <div id="private-archive-manage" hidden class="bg-white border-2 border-slate-300 rounded-lg p-3 mb-3">
