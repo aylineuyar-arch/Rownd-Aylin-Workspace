@@ -226,8 +226,10 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
             self._respond(403, 'Wrong password.')
 
     def _handle_mkdir(self):
-        if not self._authorized():
-            return self._deny()
+        # No login required: creating an empty folder doesn't read or
+        # expose any file content, so it doesn't need the same gate as
+        # opening a file or looking inside one that already has files in
+        # it — same reasoning as why names (but not contents) are public.
         name = self._read_bounded_body()
         if name is None:
             return
