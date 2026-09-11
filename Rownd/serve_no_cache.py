@@ -93,6 +93,16 @@ def parse_cookies(header_value):
 
 
 class NoCacheAuthHandler(SimpleHTTPRequestHandler):
+    # StreamRequestHandler (a parent class) applies this to the connection
+    # socket automatically in setup() — without it, a client that claims a
+    # Content-Length but never sends that much data leaves self.rfile.read()
+    # blocking forever. Since this is a plain HTTPServer with no
+    # ThreadingMixIn, that blocks the ENTIRE server, not just one client —
+    # confirmed by hanging it with a single malformed request. This bounds
+    # every blocking read on the connection, not just the one call site
+    # below that first surfaced the problem.
+    timeout = 10
+
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
         self.send_header('Pragma', 'no-cache')
@@ -108,13 +118,15 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
         # slip past auth while still serving the real file. Lowercased
         # because os.path.normcase is a no-op on POSIX, even though the
         # actual filesystem here resolves case-insensitively.
-        target = os.path.realpath(self.translate_path(self.path)).lower()
-        archive = ARCHIVE_DIR.lower()
         try:
-            common = os.path.commonpath([target, archive])
-        except ValueError:
-            return False
-        return common == archive
+            target = os.path.realpath(self.translate_path(self.path)).lower()
+            archive = ARCHIVE_DIR.lower()
+            return os.path.commonpath([target, archive]) == archive
+        except Exception:
+            # Fail closed: if this request's path can't be cleanly
+            # resolved for some unexpected reason, require auth rather
+            # than letting an unhandled exception skip the check.
+            return True
 
     def _authorized(self):
         cookies = parse_cookies(self.headers.get('Cookie', ''))
@@ -147,7 +159,16 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
         if self.path != LOGIN_PATH:
             self.send_error(501, 'Unsupported method (POST)')
             return
-        length = int(self.headers.get('Content-Length', 0))
+        try:
+            length = int(self.headers.get('Content-Length', 0))
+        except ValueError:
+            length = -1
+        # A password is never going to be anywhere near this long; a
+        # negative or huge claimed length is either a malformed request or
+        # someone poking at the endpoint, not a real login attempt.
+        if length < 0 or length > 4096:
+            self.send_error(400, 'Bad Content-Length')
+            return
         supplied_pw = self.rfile.read(length).decode('utf-8', errors='replace')
         if hmac.compare_digest(sha256_hex(supplied_pw), PASSWORD_HASH):
             body = b'OK'

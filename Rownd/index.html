@@ -1513,17 +1513,16 @@
   // already in serve_no_cache.py. On the deployed Pages site the folder
   // doesn't exist, so the fetch 404s and this falls back to "not
   // available" instead of erroring.
-  function formatFileSize(bytes){
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / 1024 / 1024).toFixed(1) + ' MB';
-  }
-
   var MAX_ARCHIVE_DEPTH = 6;
 
   function isIgnoredArchiveEntry(name){
+    // Only our own scaffolding files are excluded — a real file the user
+    // drops in (dotfile or not) always shows up. Broadly hiding anything
+    // starting with "." used to silently drop user content with no
+    // indication it happened, which is exactly the kind of stray bug this
+    // pass was meant to catch.
     var lower = name.toLowerCase();
-    return !name || name === '../' || name.charAt(0) === '.' || lower === 'readme.md';
+    return !name || name === '../' || name === '.gitkeep' || lower === 'readme.md';
   }
 
   async function walkArchiveDir(relPath, depth){
@@ -1540,16 +1539,12 @@
       .map(function(a){ return decodeURIComponent(a.getAttribute('href') || ''); })
       .filter(function(name){ return !isIgnoredArchiveEntry(name); });
 
-    var files = [];
-    for (var i = 0; i < entries.length; i++) {
-      var entry = entries[i];
-      if (entry.slice(-1) === '/') {
-        files = files.concat(await walkArchiveDir(relPath + entry, depth + 1));
-      } else {
-        files.push(relPath + entry);
-      }
-    }
-    return files;
+    var fileNames = entries.filter(function(e){ return e.slice(-1) !== '/'; }).map(function(e){ return relPath + e; });
+    var folderNames = entries.filter(function(e){ return e.slice(-1) === '/'; });
+    // Subfolders are independent requests — no reason to wait for one
+    // before starting the next.
+    var nested = await Promise.all(folderNames.map(function(e){ return walkArchiveDir(relPath + e, depth + 1); }));
+    return fileNames.concat.apply(fileNames, nested);
   }
 
   async function loadPrivateArchive(){
@@ -1574,8 +1569,10 @@
       listEl.hidden = false;
       listEl.innerHTML = '';
 
-      for (var i = 0; i < names.length; i++) {
-        var relPath = names[i];
+      // Build every row first (no network involved), then fetch all the
+      // HEAD-request sizes in parallel — independent requests, no reason
+      // to wait for file 1's size before even asking about file 2.
+      var rows = names.map(function(relPath){
         var baseName = relPath.split('/').pop();
         var href = 'private-rfi-archive/' + relPath.split('/').map(encodeURIComponent).join('/');
         var li = document.createElement('li');
@@ -1591,18 +1588,22 @@
         link.className = 'flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[#7A5C3E] font-semibold underline decoration-2 underline-offset-2';
         link.textContent = relPath; // includes the folder path, e.g. "SBIR-25-101/response.pdf"
         li.append(extEl, link);
+        listEl.appendChild(li);
+        return {li: li, href: href};
+      });
+
+      await Promise.all(rows.map(async function(row){
         try {
-          var headRes = await fetch(href, {method: 'HEAD'});
+          var headRes = await fetch(row.href, {method: 'HEAD'});
           var len = headRes.headers.get('Content-Length');
           if (len) {
             var sizeEl = document.createElement('span');
             sizeEl.className = 'text-slate-500 font-mono text-lg';
-            sizeEl.textContent = formatFileSize(parseInt(len, 10));
-            li.appendChild(sizeEl);
+            sizeEl.textContent = formatSize(parseInt(len, 10));
+            row.li.appendChild(sizeEl);
           }
         } catch (e) { /* size is a nice-to-have, not required */ }
-        listEl.appendChild(li);
-      }
+      }));
     } catch (err) {
       loadingEl.hidden = true;
       if (err && err.authRequired) {
