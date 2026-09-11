@@ -517,12 +517,20 @@
         <button type="button" id="archive-privacy-toggle" aria-expanded="false" aria-controls="archive-privacy-policy" class="extract-collapse-toggle flex items-center gap-1.5 mb-3 text-[#A34A34] font-semibold text-lg">
           <span class="chevron inline-block transition-transform">▾</span> View privacy policy
         </button>
-        <p id="archive-privacy-policy" hidden class="text-lg text-slate-700 mb-3 pl-3 border-l-4 border-[#A34A34]/30">Protected four ways: the folder is git-ignored (never committed, pushed, or deployed); it's <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">chmod 700</code> (only your OS user account can read it); the local server binds to 127.0.0.1 only, so nothing else on your network can reach it; and it's behind real HTTP Basic Auth enforced by that server — your browser will prompt for the password directly, and there's no page-level trick that bypasses it, because the check happens before the server ever responds.</p>
+        <p id="archive-privacy-policy" hidden class="text-lg text-slate-700 mb-3 pl-3 border-l-4 border-[#A34A34]/30">Protected four ways: the folder is git-ignored (never committed, pushed, or deployed); it's <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">chmod 700</code> (only your OS user account can read it); the local server binds to 127.0.0.1 only, so nothing else on your network can reach it; and it's behind a real login enforced by that server (a session cookie set only after the password checks out server-side) — there's no page-level trick that bypasses it, because the check happens before the server ever responds.</p>
 
         <div id="private-archive-loading" class="text-lg text-slate-500 font-mono">Checking for local files…</div>
         <div id="private-archive-empty" hidden class="text-lg text-slate-600">No files found in <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">private-rfi-archive/</code> yet. Drop files into that folder on disk, then reload this page.</div>
         <div id="private-archive-unavailable" hidden class="text-lg text-slate-600">Not available here — this only works when the site is running locally via <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">python3 serve_no_cache.py</code>, not on the deployed Pages site.</div>
-        <div id="private-archive-auth-needed" hidden class="text-lg text-slate-600">Password required. Your browser should have prompted for it — if it didn't, reload this page. The password lives only on this machine (<code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">Rownd/.archive_auth_hash</code>, git-ignored); set or change it from the terminal running <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">serve_no_cache.py</code>.</div>
+        <div id="private-archive-auth-needed" hidden class="bg-white border-2 border-slate-300 rounded-lg p-3">
+          <label class="block text-lg font-semibold text-slate-800 mb-1.5">Enter the archive password</label>
+          <div class="flex gap-2 flex-wrap items-center">
+            <input type="password" id="archive-pw-input" placeholder="Password" class="bg-slate-50 border-2 border-slate-300 rounded-lg px-3 py-2 text-lg">
+            <button type="button" id="archive-pw-submit" class="bg-[#A34A34] hover:bg-[#8a3d2b] text-white font-semibold text-lg px-3.5 py-2 rounded-lg transition-colors">Unlock</button>
+          </div>
+          <p id="archive-pw-error" hidden class="text-lg text-[#A34A34] font-semibold mt-1.5">Wrong password.</p>
+          <p class="text-sm text-slate-500 mt-2 leading-relaxed">Set or change this from the terminal running <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">serve_no_cache.py</code> — it lives only on this machine (<code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">Rownd/.archive_auth_hash</code>, git-ignored), never in the page or the repo.</p>
+        </div>
         <ul id="private-archive-list" hidden class="flex flex-col gap-1.5"></ul>
       </div>
 
@@ -1521,7 +1529,7 @@
   async function walkArchiveDir(relPath, depth){
     if (depth > MAX_ARCHIVE_DEPTH) return [];
     var res = await fetch('private-rfi-archive/' + relPath);
-    if (res.status === 401) { var authErr = new Error('auth required'); authErr.authRequired = true; throw authErr; }
+    if (res.status === 403) { var authErr = new Error('auth required'); authErr.authRequired = true; throw authErr; }
     if (!res.ok) {
       if (depth === 0) { var notFoundErr = new Error('not found'); notFoundErr.notFound = true; throw notFoundErr; }
       return [];
@@ -1552,9 +1560,10 @@
     var listEl = document.getElementById('private-archive-list');
     authNeededEl.hidden = true;
     try {
-      // The server (serve_no_cache.py) challenges any of these fetches
-      // with real HTTP Basic Auth (401 + WWW-Authenticate) if a password
-      // is set — the browser handles that natively, once, for the origin.
+      // The server (serve_no_cache.py) denies these with a plain 403 until
+      // the archive-login form below has set a session cookie — the
+      // browser then attaches that cookie automatically to every request
+      // here and to the file links themselves, no per-request work needed.
       var names = (await walkArchiveDir('', 0)).sort();
 
       loadingEl.hidden = true;
@@ -1606,6 +1615,24 @@
       unavailableEl.hidden = false;
     }
   }
+
+  var archivePwSubmit = document.getElementById('archive-pw-submit');
+  var archivePwInput = document.getElementById('archive-pw-input');
+  archivePwSubmit.addEventListener('click', async function(){
+    var pw = archivePwInput.value;
+    var errEl = document.getElementById('archive-pw-error');
+    var res = await fetch('/archive-login', {method: 'POST', body: pw});
+    if (res.ok) {
+      errEl.hidden = true;
+      archivePwInput.value = '';
+      loadPrivateArchive();
+    } else {
+      errEl.hidden = false;
+    }
+  });
+  archivePwInput.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') archivePwSubmit.click();
+  });
 
   loadPrivateArchive();
 })();
