@@ -512,11 +512,12 @@
           <span class="font-display font-semibold text-2xl text-slate-900">Private RFI/RFP Archive</span>
           <span class="font-mono text-sm font-bold px-2.5 py-1 rounded-full bg-[#A34A34] text-white">LOCAL ONLY — never in this repo</span>
         </div>
-        <p class="text-lg text-slate-700 mb-3">Previously-sent RFI/RFPs, dropped on disk into <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">Rownd/private-rfi-archive/</code> — the basis for future generated proposals. That folder is git-ignored and only readable while running the site locally; it's never committed, pushed, or deployed to the public Pages site.</p>
+        <p class="text-lg text-slate-700 mb-3">Previously-sent RFI/RFPs, dropped on disk into <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">Rownd/private-rfi-archive/</code> — the basis for future generated proposals. Protected four ways: the folder is git-ignored (never committed, pushed, or deployed); it's `chmod 700` (only your OS user account can read it); the local server binds to 127.0.0.1 only, so nothing else on your network can reach it; and it's behind real HTTP Basic Auth enforced by that server — your browser will prompt for the password directly, and there's no page-level trick that bypasses it, because the check happens before the server ever responds.</p>
 
         <div id="private-archive-loading" class="text-lg text-slate-500 font-mono">Checking for local files…</div>
         <div id="private-archive-empty" hidden class="text-lg text-slate-600">No files found in <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">private-rfi-archive/</code> yet. Drop files into that folder on disk, then reload this page.</div>
-        <div id="private-archive-unavailable" hidden class="text-lg text-slate-600">Not available here — this only works when the site is running locally (<code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">python3 serve_no_cache.py</code>), not on the deployed Pages site.</div>
+        <div id="private-archive-unavailable" hidden class="text-lg text-slate-600">Not available here — this only works when the site is running locally via <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">python3 serve_no_cache.py</code>, not on the deployed Pages site.</div>
+        <div id="private-archive-auth-needed" hidden class="text-lg text-slate-600">Password required. Your browser should have prompted for it — if it didn't, reload this page. The password lives only on this machine (<code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">Rownd/.archive_auth_hash</code>, git-ignored); set or change it from the terminal running <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">serve_no_cache.py</code>.</div>
         <ul id="private-archive-list" hidden class="flex flex-col gap-1.5"></ul>
       </div>
 
@@ -1529,9 +1530,20 @@
     var loadingEl = document.getElementById('private-archive-loading');
     var emptyEl = document.getElementById('private-archive-empty');
     var unavailableEl = document.getElementById('private-archive-unavailable');
+    var authNeededEl = document.getElementById('private-archive-auth-needed');
     var listEl = document.getElementById('private-archive-list');
+    authNeededEl.hidden = true;
     try {
+      // The server (serve_no_cache.py) challenges this with real HTTP Basic
+      // Auth (401 + WWW-Authenticate) if a password is set — the browser
+      // handles that natively. A 404 means the folder doesn't exist at all
+      // (not running locally, or the deployed Pages site).
       var res = await fetch('private-rfi-archive/');
+      if (res.status === 401) {
+        loadingEl.hidden = true; emptyEl.hidden = true; listEl.hidden = true;
+        authNeededEl.hidden = false;
+        return;
+      }
       if (!res.ok) throw new Error('not found');
       var html = await res.text();
       var doc = new DOMParser().parseFromString(html, 'text/html');
@@ -1585,6 +1597,7 @@
       unavailableEl.hidden = false;
     }
   }
+
   loadPrivateArchive();
 })();
 </script>

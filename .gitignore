@@ -4,3 +4,7 @@
 Rownd/private-rfi-archive/*
 !Rownd/private-rfi-archive/.gitkeep
 !Rownd/private-rfi-archive/README.md
+
+# Hashed password for the archive server's HTTP Basic Auth — local to this
+# machine only, never committed.
+Rownd/.archive_auth_hash
