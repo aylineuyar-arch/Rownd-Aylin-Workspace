@@ -110,28 +110,28 @@
               </div>
               <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-checklist-rfi"></ul>
             </div>
-            <textarea id="checklist-rfi-details" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="…or paste the full RFI / topic details here"></textarea>
+            <textarea id="checklist-rfi-details" class="checklist-input w-full min-h-[70px] resize-none overflow-hidden bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="…or paste the full RFI / topic details here"></textarea>
           </div>
           <div class="checklist-item">
             <div class="flex items-center gap-2 mb-1.5">
               <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-lg font-bold transition-colors">✓</span>
               <label class="font-semibold text-xl text-slate-900" for="checklist-instructions">Solicitation instructions</label>
             </div>
-            <textarea id="checklist-instructions" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="Paste the solicitation instructions here…"></textarea>
+            <textarea id="checklist-instructions" class="checklist-input w-full min-h-[70px] resize-none overflow-hidden bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="Paste the solicitation instructions here…"></textarea>
           </div>
           <div class="checklist-item">
             <div class="flex items-center gap-2 mb-1.5">
               <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-lg font-bold transition-colors">✓</span>
               <label class="font-semibold text-xl text-slate-900" for="checklist-rules">Rules and component list</label>
             </div>
-            <textarea id="checklist-rules" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="Paste the rules and component list here…"></textarea>
+            <textarea id="checklist-rules" class="checklist-input w-full min-h-[70px] resize-none overflow-hidden bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="Paste the rules and component list here…"></textarea>
           </div>
           <div class="checklist-item">
             <div class="flex items-center gap-2 mb-1.5">
               <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-lg font-bold transition-colors">✓</span>
               <label class="font-semibold text-xl text-slate-900" for="checklist-qa">Q&amp;A answers</label>
             </div>
-            <textarea id="checklist-qa" class="checklist-input w-full min-h-[70px] resize-y bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="Paste the Q&amp;A answers here…"></textarea>
+            <textarea id="checklist-qa" class="checklist-input w-full min-h-[70px] resize-none overflow-hidden bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="Paste the Q&amp;A answers here…"></textarea>
           </div>
         </div>
       </div>
@@ -831,13 +831,21 @@
     check.classList.toggle('text-transparent', !filled);
     updateChecklistProgress();
   }
+  // grow the box to fit whatever's pasted/typed/extracted into it, instead
+  // of leaving a fixed-height box with an internal scrollbar
+  function autoGrowTextarea(ta){
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  }
   document.querySelectorAll('.checklist-input').forEach(function(ta){
     var item = ta.closest('.checklist-item');
     ta.addEventListener('input', function(){
       var uploadList = item.querySelector('.file-list');
       var hasFile = uploadList && uploadList.children.length > 0;
       setChecklistChecked(item, ta.value.trim().length > 0 || hasFile);
+      autoGrowTextarea(ta);
     });
+    autoGrowTextarea(ta);
   });
   var rfiFileList = document.getElementById('filelist-checklist-rfi');
   if (rfiFileList) {

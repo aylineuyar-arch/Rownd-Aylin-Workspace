@@ -2,6 +2,10 @@
 
 Every push to this repo is logged here, newest first, in plain language — what changed and why. This file is updated as part of every commit from now on, not just written after the fact.
 
+## 2026-09-10
+
+- **Checklist text boxes now grow to fit their content — no internal scrollbar.** They previously had a fixed min-height with `resize-y`, so pasted or extraction-filled text beyond that height was hidden behind a scrollbar inside the box. Switched to auto-grow: each box's height now tracks its own content on every keystroke/paste, and also when extraction programmatically fills a box (Phase I text into Solicitation instructions, etc.), since that already dispatches the same `input` event. Verified with a long pasted block (grew to 9176px, no internal scroll) and with extraction-filled text (grew from 132px to 3156px automatically).
+
 ## 2026-09-09
 
 - **Fix: PDF uploaded to the top "reference files" zone did nothing** — the New Draft page has two upload zones that look nearly identical: the top "Drop reference files" box and the "RFI details" box inside the Draft Checklist. Only the checklist one was ever wired to run extraction; the top one just attached the file to a list and stopped there, so a topic PDF dropped in the wrong-looking-right zone silently produced no Extracted Topic Info. Fixed by having the top zone forward any PDF it receives into the same extraction pipeline (and check off the RFI details checklist item), so it works from either zone now. Verified with a synthetic PDF against both zones before and after.
