@@ -346,7 +346,7 @@
           <span class="chevron inline-block transition-transform">▾</span> Referenced from your private archive
         </button>
         <div id="referenced-body" hidden class="mt-3">
-          <p class="text-sm text-slate-500 mb-2.5 leading-relaxed">Real excerpts pulled from files in your Private RFI/RFP Archive — not used to write the draft text above (there's no real writing model behind this mockup), just showing what a real system would have available to reference.</p>
+          <p class="text-sm text-slate-500 mb-2.5 leading-relaxed">Real excerpts pulled from PDFs in your Private RFI/RFP Archive — these are what actually get sent to the model when you generate a real draft. Check specific documents on the Reference Documents page to control which ones get used (marked "SELECTED" below); otherwise a few are picked automatically.</p>
           <div id="referenced-loading" class="text-lg text-slate-500 font-mono">Checking your private archive…</div>
           <div id="referenced-empty" hidden class="text-lg text-slate-600">No files in your private archive yet — add some from the Reference Documents page.</div>
           <ul id="referenced-list" hidden class="flex flex-col gap-2.5"></ul>
@@ -1547,6 +1547,21 @@
     refreshApiKeyStatus();
   });
 
+  // Which archive PDFs to use as "similar past submissions" when
+  // generating — picked via checkboxes on the Reference Documents page,
+  // persisted so the choice survives navigating away and back. Empty
+  // means "no explicit choice made" and generation falls back to
+  // auto-picking a few, same as before this existed.
+  var SELECTED_ARCHIVE_FILES_KEY = 'draftConsoleSelectedArchiveFiles';
+  function getSelectedArchiveFiles(){
+    try { return new Set(JSON.parse(localStorage.getItem(SELECTED_ARCHIVE_FILES_KEY) || '[]')); }
+    catch (e) { return new Set(); }
+  }
+  function setSelectedArchiveFiles(set){
+    try { localStorage.setItem(SELECTED_ARCHIVE_FILES_KEY, JSON.stringify(Array.from(set))); }
+    catch (e) {}
+  }
+
   // Builds the actual prompt from everything already extracted/parsed on
   // this page — real topic details, real Q&A pairs, real checklist text,
   // real archive excerpts — not a hardcoded template with blanks filled
@@ -1578,11 +1593,18 @@
 
     // Real excerpts from real files in the private archive — "similar
     // past submissions" the way the archive is actually populated, not
-    // fabricated. Capped at 3 files so the prompt doesn't balloon.
+    // fabricated. If you've checked specific documents on the Reference
+    // Documents page, those are what get used (up to 6); otherwise falls
+    // back to auto-picking the first few PDFs, same as before that
+    // selection existed.
     try {
       var folders = [];
       var names = (await walkArchiveDir('', 0, folders)).sort();
-      var pdfNames = names.filter(function(n){ return /\.pdf$/i.test(n); }).slice(0, 3);
+      var allPdfNames = names.filter(function(n){ return /\.pdf$/i.test(n); });
+      var selectedArchiveFiles = getSelectedArchiveFiles();
+      var chosenPdfNames = allPdfNames.filter(function(n){ return selectedArchiveFiles.has(n); });
+      var usingSelection = chosenPdfNames.length > 0;
+      var pdfNames = usingSelection ? chosenPdfNames.slice(0, 6) : allPdfNames.slice(0, 3);
       var excerptBlocks = [];
       for (var i = 0; i < pdfNames.length; i++) {
         var href = 'private-rfi-archive/' + pdfNames[i].split('/').map(encodeURIComponent).join('/');
@@ -1590,7 +1612,10 @@
         if (excerpt) excerptBlocks.push(pdfNames[i] + ':\n' + excerpt);
       }
       if (excerptBlocks.length) {
-        parts.push('EXCERPTS FROM SIMILAR PAST SUBMISSIONS IN THE ARCHIVE (for tone/approach reference):\n' + excerptBlocks.join('\n\n'));
+        var excerptLabel = usingSelection
+          ? 'EXCERPTS FROM THE DOCUMENTS YOU SELECTED IN YOUR PRIVATE ARCHIVE (for tone/approach reference):\n'
+          : 'EXCERPTS FROM SIMILAR PAST SUBMISSIONS IN THE ARCHIVE (for tone/approach reference):\n';
+        parts.push(excerptLabel + excerptBlocks.join('\n\n'));
       }
     } catch (e) { /* archive not reachable — generate from what we have */ }
 
@@ -1797,15 +1822,25 @@
       listEl.hidden = false;
       listEl.innerHTML = '';
 
+      var selectedArchiveFiles = getSelectedArchiveFiles();
       for (var i = 0; i < pdfNames.length; i++) {
         var relPath = pdfNames[i];
         var href = 'private-rfi-archive/' + relPath.split('/').map(encodeURIComponent).join('/');
         var li = document.createElement('li');
         li.className = 'bg-slate-50 border-2 border-slate-200 rounded-lg p-3';
-        var nameEl = document.createElement('div');
-        nameEl.className = 'font-mono text-sm font-bold text-slate-700 mb-1';
-        nameEl.textContent = relPath;
-        li.appendChild(nameEl);
+        var nameRow = document.createElement('div');
+        nameRow.className = 'flex items-center gap-2 mb-1';
+        var nameEl = document.createElement('span');
+        nameEl.className = 'font-mono text-sm font-bold text-slate-700';
+        nameEl.textContent = relPath.split('/').pop(); // just the filename — its folder isn't relevant here
+        nameRow.appendChild(nameEl);
+        if (selectedArchiveFiles.has(relPath)) {
+          var selectedBadge = document.createElement('span');
+          selectedBadge.className = 'font-mono text-xs font-bold px-1.5 py-0.5 rounded-full bg-[#3D4A73]/10 text-[#3D4A73]';
+          selectedBadge.textContent = 'SELECTED';
+          nameRow.appendChild(selectedBadge);
+        }
+        li.appendChild(nameRow);
         var excerpt = await extractArchiveExcerpt(href);
         var excerptEl = document.createElement('div');
         if (excerpt) {
@@ -2104,6 +2139,24 @@
           var href = 'private-rfi-archive/' + file.relPath.split('/').map(encodeURIComponent).join('/');
           var li = document.createElement('li');
           li.className = 'flex items-center gap-2 bg-white border-2 border-slate-300 rounded-md px-2.5 py-1.5 text-lg';
+
+          // Only PDFs are ever actually used for generation excerpts, so
+          // only they get a checkbox — offering one on a file type that
+          // can't be used would just be a control that does nothing.
+          if (/\.pdf$/i.test(file.name)) {
+            var selectCheckbox = document.createElement('input');
+            selectCheckbox.type = 'checkbox';
+            selectCheckbox.className = 'w-5 h-5 flex-shrink-0 accent-[#3D4A73]';
+            selectCheckbox.title = 'Use this document when generating a new draft';
+            selectCheckbox.checked = selectedArchiveFiles.has(file.relPath);
+            selectCheckbox.addEventListener('change', function(){
+              var sel = getSelectedArchiveFiles();
+              if (selectCheckbox.checked) sel.add(file.relPath); else sel.delete(file.relPath);
+              setSelectedArchiveFiles(sel);
+            });
+            li.appendChild(selectCheckbox);
+          }
+
           var ext = (file.name.split('.').pop() || 'file').toUpperCase().slice(0, 4);
           var extEl = document.createElement('span');
           extEl.className = 'font-mono text-sm font-bold text-white bg-[#A34A34] px-1.5 rounded';
@@ -2115,10 +2168,33 @@
           link.className = 'flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[#7A5C3E] font-semibold underline decoration-2 underline-offset-2';
           link.textContent = file.name; // just the filename — its indentation already shows which folder it's in
           li.append(extEl, link);
+
+          // Two-click confirm — this deletes real content with no undo,
+          // so one accidental click shouldn't be enough.
+          var removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'text-base text-[#A34A34] font-semibold underline decoration-2 underline-offset-2 whitespace-nowrap flex-shrink-0';
+          removeBtn.textContent = 'Remove';
+          removeBtn.addEventListener('click', function(){
+            if (removeBtn.dataset.armed === 'true') {
+              removeArchiveFile(file.relPath, removeBtn);
+            } else {
+              removeBtn.dataset.armed = 'true';
+              removeBtn.textContent = 'Confirm remove?';
+              clearTimeout(removeBtn._disarmTimer);
+              removeBtn._disarmTimer = setTimeout(function(){
+                removeBtn.dataset.armed = 'false';
+                removeBtn.textContent = 'Remove';
+              }, 4000);
+            }
+          });
+          li.appendChild(removeBtn);
+
           container.appendChild(li);
           rows.push({li: li, href: href});
         });
       }
+      var selectedArchiveFiles = getSelectedArchiveFiles();
       renderTree(root, [], listEl);
 
       // Fetch every file's HEAD-request size in parallel, independent of
@@ -2210,6 +2286,35 @@
   // along as headers. Shared by the generic "Upload File" control (no
   // folder) and every folder's own inline "Upload File" button, so
   // there's one upload path instead of near-duplicate copies of it.
+  async function removeArchiveFile(relPath, btnEl){
+    btnEl.disabled = true;
+    btnEl.textContent = 'Removing…';
+    try {
+      var res = await fetch('/archive-delete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({path: relPath})
+      });
+      if (res.status === 403) {
+        btnEl.disabled = false;
+        btnEl.dataset.armed = 'false';
+        btnEl.textContent = 'Log in above to remove files';
+        setTimeout(function(){ btnEl.textContent = 'Remove'; }, 3000);
+        return;
+      }
+      if (!res.ok) throw new Error(await res.text());
+      var sel = getSelectedArchiveFiles();
+      sel.delete(relPath);
+      setSelectedArchiveFiles(sel);
+      loadPrivateArchive();
+    } catch (e) {
+      btnEl.disabled = false;
+      btnEl.dataset.armed = 'false';
+      btnEl.textContent = 'Remove failed — try again';
+      setTimeout(function(){ btnEl.textContent = 'Remove'; }, 3000);
+    }
+  }
+
   async function uploadFile(file, folderName){
     var errEl = document.getElementById('archive-upload-error');
     if (!file) return;

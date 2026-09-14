@@ -56,6 +56,7 @@ LOGIN_PATH = '/archive-login'
 MKDIR_PATH = '/archive-mkdir'
 UPLOAD_PATH = '/archive-upload'
 GENERATE_PATH = '/archive-generate'
+DELETE_PATH = '/archive-delete'
 SESSION_COOKIE_NAME = 'archive_session'
 
 # Hybrid generation, "free tier" half: set this once when starting the
@@ -69,6 +70,7 @@ ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '').strip()
 ANTHROPIC_MODEL = os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-5').strip()
 MAX_GENERATE_BODY = 200 * 1024
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024
+MAX_DELETE_BODY = 4096
 
 
 def is_valid_segment_name(name):
@@ -251,6 +253,8 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
             return self._handle_upload()
         if self.path == GENERATE_PATH:
             return self._handle_generate()
+        if self.path == DELETE_PATH:
+            return self._handle_delete()
         self.send_error(501, 'Unsupported method (POST)')
 
     def _handle_generate(self):
@@ -384,6 +388,39 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
             self._respond(500, 'Could not save that file.')
         else:
             self._respond(200, 'OK')
+
+    def _handle_delete(self):
+        # Unlike mkdir/upload, this destroys real content with no undo —
+        # requires login, same bar as opening a file's content at all.
+        if not self._authorized():
+            return self._deny()
+        body = self._read_bounded_body(MAX_DELETE_BODY)
+        if body is None:
+            return
+        try:
+            payload = json.loads(body)
+            rel_path = payload.get('path', '')
+        except (ValueError, AttributeError):
+            return self._respond(400, 'Invalid JSON body.')
+        if not isinstance(rel_path, str) or not rel_path:
+            return self._respond(400, 'Missing "path".')
+
+        # Every path segment is validated individually — same guarantee
+        # is_valid_segment_name gives mkdir/upload: no segment can contain
+        # a separator or "..", so the joined path can't escape ARCHIVE_DIR
+        # no matter how many segments deep it goes.
+        segments = rel_path.split('/')
+        if not segments or not all(is_valid_segment_name(s) for s in segments):
+            return self._respond(400, 'Invalid path.')
+
+        target = os.path.join(ARCHIVE_DIR, *segments)
+        if not os.path.isfile(target):
+            return self._respond(404, 'File not found.')
+        try:
+            os.remove(target)
+        except OSError:
+            return self._respond(500, 'Could not remove that file.')
+        self._respond(200, 'OK')
 
 
 if __name__ == '__main__':
