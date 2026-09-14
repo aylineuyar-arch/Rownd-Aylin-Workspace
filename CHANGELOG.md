@@ -4,6 +4,10 @@ Every push to this repo is logged here, newest first, in plain language — what
 
 ## 2026-09-13
 
+- **Q&A summary now surfaces what's actually being asked, instead of repeating the category badges.** The summary sentence used to say "mostly about General and Technical" — but the category breakdown badges directly above it already show that exact breakdown, so the sentence was pure repetition ("this means nothing" was the accurate complaint). Rewrote it to quote each real question instead (the actual extracted text, not a synthesized category label), and dropped the generic "None of the answers use clearly binding language..." filler that appeared even when there was nothing to say — the binding-language mention now only appears when an answer actually flags as binding. Verified with real Q&A text: the summary now reads as actual question content, category badges stayed separate and un-duplicated, and the no-flagged-answers case no longer shows filler text.
+
+
+
 - **Fixed PDF text extraction destroying all line/paragraph structure, turning every extracted document into one unbroken block.** `extractPdfText` joined every text fragment on a page with a single space (`content.items.map(it => it.str).join(' ')`), discarding the line-break information PDF.js actually provides on each item (`item.hasEOL`). Rewrote it to rebuild real line breaks from that signal, collapsing 3+ consecutive blank lines into a single paragraph break instead of a wall of vertical whitespace. This fixes readability for all four Draft Checklist boxes that get auto-filled from a PDF (RFI details directly, Solicitation instructions / Rules and component list via the structured-section parser, which slices from this same extracted text). Verified with a real multi-line, multi-paragraph test PDF: the extracted "Rules and component list" text now shows three genuinely separate lines matching the source document exactly, instead of one run-on sentence.
 
 ## 2026-09-10

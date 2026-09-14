@@ -1296,19 +1296,20 @@
       breakdown.appendChild(span);
     });
 
-    // plain-language summary — built from the real counts and the real
-    // flagged answers above, not a separate/fabricated synthesis
-    var maxCount = Math.max.apply(null, Object.values(counts));
-    var topCategories = Object.keys(counts).filter(function(name){ return counts[name] === maxCount; });
-    var summary = pairs.length + (pairs.length === 1 ? ' question was' : ' questions were') +
-      ' asked, mostly about ' + topCategories.join(' and ') + '.';
+    // Plain-language summary — the category breakdown badges above
+    // already say WHAT TYPE each question is, so repeating "mostly
+    // about X and Y" here just restated them. This instead surfaces
+    // WHAT'S ACTUALLY BEING ASKED, using the real question text (not a
+    // synthesized abstraction), plus which answers read as binding —
+    // and only mentions that second part when there's something to flag,
+    // instead of a generic "none of the answers..." filler line.
+    var summary = pairs.length + (pairs.length === 1 ? ' question asked: ' : ' questions asked: ') +
+      categorized.map(function(c){ return '"' + truncate(c.pair.question, 70) + '"'; }).join('; ') + '.';
     var flagged = categorized.filter(function(c){ return isKeyGuidance(c.pair.answer); });
     if (flagged.length) {
       var snippets = flagged.map(function(c){ return '"' + truncate(c.pair.answer, 70) + '"'; });
       summary += ' ' + flagged.length + (flagged.length === 1 ? ' answer reads as binding' : ' answers read as binding') +
         ': ' + snippets.join('; ') + '.';
-    } else {
-      summary += ' None of the answers use clearly binding language ("shall", "must", "required") — read them individually for nuance.';
     }
     document.getElementById('qa-summary').textContent = summary;
 
