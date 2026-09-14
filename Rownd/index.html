@@ -346,7 +346,7 @@
           <span class="chevron inline-block transition-transform">▾</span> Referenced from your private archive
         </button>
         <div id="referenced-body" hidden class="mt-3">
-          <p class="text-sm text-slate-500 mb-2.5 leading-relaxed">Real excerpts pulled from PDFs in your Private RFI/RFP Archive — these are what actually get sent to the model when you generate a real draft. Check specific documents on the Reference Documents page to control which ones get used (marked "SELECTED" below); otherwise a few are picked automatically.</p>
+          <p class="text-sm text-slate-500 mb-2.5 leading-relaxed">Real excerpts pulled from PDFs in your Private RFI/RFP Archive. Nothing here is ever sent to the AI automatically — check specific documents on the Reference Documents page (marked "SELECTED" below), and you'll be asked to confirm exactly which ones before each generation actually sends them.</p>
           <div id="referenced-loading" class="text-lg text-slate-500 font-mono">Checking your private archive…</div>
           <div id="referenced-empty" hidden class="text-lg text-slate-600">No files in your private archive yet — add some from the Reference Documents page.</div>
           <ul id="referenced-list" hidden class="flex flex-col gap-2.5"></ul>
@@ -1567,7 +1567,7 @@
   // real archive excerpts — not a hardcoded template with blanks filled
   // in. If nothing was extracted, this still produces a reasonable if
   // sparse prompt rather than failing.
-  async function buildGenerationPrompt(){
+  async function buildGenerationPrompt(confirmedPdfNames){
     var parts = ['You are drafting the Technical Approach section of a DoD SBIR/STTR proposal in response to the RFI/topic below. Be specific and technical, not generic marketing language.'];
     parts.push('TOPIC: ' + document.getElementById('topic-code-el').textContent + ' — ' + document.getElementById('topic-title-el').textContent);
 
@@ -1591,33 +1591,25 @@
         qaPairs.map(function(p){ return 'Q: ' + p.question + '\nA: ' + p.answer; }).join('\n\n'));
     }
 
-    // Real excerpts from real files in the private archive — "similar
-    // past submissions" the way the archive is actually populated, not
-    // fabricated. If you've checked specific documents on the Reference
-    // Documents page, those are what get used (up to 6); otherwise falls
-    // back to auto-picking the first few PDFs, same as before that
-    // selection existed.
-    try {
-      var folders = [];
-      var names = (await walkArchiveDir('', 0, folders)).sort();
-      var allPdfNames = names.filter(function(n){ return /\.pdf$/i.test(n); });
-      var selectedArchiveFiles = getSelectedArchiveFiles();
-      var chosenPdfNames = allPdfNames.filter(function(n){ return selectedArchiveFiles.has(n); });
-      var usingSelection = chosenPdfNames.length > 0;
-      var pdfNames = usingSelection ? chosenPdfNames.slice(0, 6) : allPdfNames.slice(0, 3);
-      var excerptBlocks = [];
-      for (var i = 0; i < pdfNames.length; i++) {
-        var href = 'private-rfi-archive/' + pdfNames[i].split('/').map(encodeURIComponent).join('/');
-        var excerpt = await extractArchiveExcerpt(href);
-        if (excerpt) excerptBlocks.push(pdfNames[i] + ':\n' + excerpt);
-      }
-      if (excerptBlocks.length) {
-        var excerptLabel = usingSelection
-          ? 'EXCERPTS FROM THE DOCUMENTS YOU SELECTED IN YOUR PRIVATE ARCHIVE (for tone/approach reference):\n'
-          : 'EXCERPTS FROM SIMILAR PAST SUBMISSIONS IN THE ARCHIVE (for tone/approach reference):\n';
-        parts.push(excerptLabel + excerptBlocks.join('\n\n'));
-      }
-    } catch (e) { /* archive not reachable — generate from what we have */ }
+    // Real excerpts from real files in the private archive — only the
+    // ones explicitly checked AND explicitly confirmed just now (see
+    // confirmArchiveInclusion below). No auto-picking: these are
+    // previously-sent RFIs/RFPs, sensitive by nature, so nothing from
+    // the archive is ever included without you actively choosing it
+    // for this specific generation.
+    if (confirmedPdfNames && confirmedPdfNames.length) {
+      try {
+        var excerptBlocks = [];
+        for (var i = 0; i < confirmedPdfNames.length; i++) {
+          var href = 'private-rfi-archive/' + confirmedPdfNames[i].split('/').map(encodeURIComponent).join('/');
+          var excerpt = await extractArchiveExcerpt(href);
+          if (excerpt) excerptBlocks.push(confirmedPdfNames[i] + ':\n' + excerpt);
+        }
+        if (excerptBlocks.length) {
+          parts.push('EXCERPTS FROM THE DOCUMENTS YOU SELECTED AND CONFIRMED FROM YOUR PRIVATE ARCHIVE (for tone/approach reference):\n' + excerptBlocks.join('\n\n'));
+        }
+      } catch (e) { /* archive not reachable — generate from what we have */ }
+    }
 
     parts.push('FORMATTING: Write in clear paragraphs separated by a blank line — do not write one giant block of text. Estimate where each printed page would end (roughly 500-550 words per page, or whatever page limit the Solicitation Instructions state) and mark that point with a standalone line reading exactly "--- Page N ---" (e.g. "--- Page 2 ---") on its own line between paragraphs, so a reader can see the page breaks.');
     parts.push('Write the Technical Approach section now.');
@@ -1700,34 +1692,85 @@
     return {ok: true, text: text, usedOwnKey: usedOwnKey};
   }
 
+  // Which checked archive documents actually exist right now — checking
+  // a box on the Reference Documents page records intent, but the file
+  // could have been removed since, or the archive could be unreachable.
+  async function getCheckedArchivePdfNames(){
+    try {
+      var folders = [];
+      var names = (await walkArchiveDir('', 0, folders)).sort();
+      var allPdfNames = names.filter(function(n){ return /\.pdf$/i.test(n); });
+      var selectedArchiveFiles = getSelectedArchiveFiles();
+      return allPdfNames.filter(function(n){ return selectedArchiveFiles.has(n); });
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // These are previously-sent RFIs/RFPs — sensitive by nature — so
+  // nothing from the archive is ever sent to the AI without an explicit,
+  // per-generation yes. A native confirm() rather than a page panel:
+  // it blocks until answered and can't be missed or clicked past by
+  // accident the way an inline button could.
+  function confirmArchiveInclusion(pdfNames){
+    var fileListText = pdfNames.map(function(n){ return '• ' + n; }).join('\n');
+    return window.confirm(
+      'Send ' + pdfNames.length + ' document(s) from your Private RFI/RFP Archive to Anthropic’s API for draft generation?\n\n' +
+      fileListText +
+      '\n\nThis sends their content over the network to a third party. Choose Cancel to generate from the topic/checklist/Q&A only, without these documents.'
+    );
+  }
+
   async function generateRealDraft(){
     var statusEl = document.getElementById('generation-status');
     var fableEl = document.getElementById('draft-fable');
     var geminiEl = document.getElementById('draft-gemini');
 
+    var checkedPdfNames = await getCheckedArchivePdfNames();
+    var confirmedPdfNames = [];
+    var archiveDeclined = false;
+    if (checkedPdfNames.length) {
+      if (confirmArchiveInclusion(checkedPdfNames)) {
+        confirmedPdfNames = checkedPdfNames;
+      } else {
+        archiveDeclined = true;
+      }
+    }
+
     statusEl.hidden = false;
-    statusEl.textContent = 'Generating from the real topic, Q&A, and archive content on this page…';
+    statusEl.textContent = 'Generating from the real topic, Q&A, and checklist on this page' + (confirmedPdfNames.length ? ', plus your confirmed archive documents' : '') + '…';
     fableEl.textContent = '';
     geminiEl.textContent = '';
 
-    var prompt = await buildGenerationPrompt();
+    var prompt = await buildGenerationPrompt(confirmedPdfNames);
     var result = await callAnthropic(prompt);
 
     if (result.ok) {
       renderDraftText(fableEl, result.text);
       renderDraftText(geminiEl, result.text); // one real call — see note below
       statusEl.hidden = false;
-      statusEl.textContent = result.usedOwnKey
-        ? '✓ Real draft generated using your saved API key. (Fable/Gemini tabs show the same real output — there is only one real model call here, not two.)'
-        : '✓ Real draft generated via this server\u2019s configured key. (Fable/Gemini tabs show the same real output — there is only one real model call here, not two.)';
+      var archiveNote = confirmedPdfNames.length
+        ? ' Included ' + confirmedPdfNames.length + ' confirmed archive document(s).'
+        : (archiveDeclined ? ' Generated without your checked archive document(s) — declined.' : '');
+      statusEl.textContent = (result.usedOwnKey
+        ? '✓ Real draft generated using your saved API key.'
+        : '✓ Real draft generated via this server\u2019s configured key.')
+        + ' (Fable/Gemini tabs show the same real output — there is only one real model call here, not two.)' + archiveNote;
     } else {
       fableEl.innerHTML = MOCK_FABLE_HTML;
       geminiEl.innerHTML = MOCK_GEMINI_HTML;
       statusEl.hidden = false;
+      // Nothing was actually sent anywhere in this branch — no key means
+      // no real API call happened at all, so a confirmed archive
+      // selection was never used. Say so, since the confirm dialog just
+      // fired and it'd be confusing not to explain why nothing came of it.
+      var confirmNote = confirmedPdfNames.length
+        ? ' Nothing was sent, including the archive document(s) you just confirmed — no API key is configured anywhere.'
+        : '';
       if (result.reason === 'no-key') {
-        statusEl.textContent = 'Showing placeholder mockup text — add your Anthropic API key above (or set ANTHROPIC_API_KEY on the server) for a real draft.';
+        statusEl.textContent = 'Showing placeholder mockup text — add your Anthropic API key above (or set ANTHROPIC_API_KEY on the server) for a real draft.' + confirmNote;
       } else {
-        statusEl.textContent = 'Showing placeholder mockup text — generation failed (' + (result.detail || result.reason) + ').';
+        statusEl.textContent = 'Showing placeholder mockup text — generation failed (' + (result.detail || result.reason) + ').' + confirmNote;
       }
     }
   }
