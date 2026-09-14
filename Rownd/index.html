@@ -1515,6 +1515,25 @@
       document.getElementById('draft-fable').innerHTML = draft.draftFableHtml;
       document.getElementById('draft-gemini').innerHTML = draft.draftGeminiHtml;
       document.getElementById('draft-panel').hidden = draft.draftPanelHidden;
+
+      // Restore the checklist by replaying its saved text through the
+      // real 'input' listeners (checkmarks, auto-grow, the RFI-details
+      // structured-section parser, Q&A guidance) instead of trying to
+      // snapshot/restore the derived panels directly — those panels have
+      // their own per-element collapse-toggle listeners that a raw
+      // innerHTML clone would leave non-interactive.
+      var checklistFields = [
+        ['checklist-rfi-details', draft.checklistRfiDetails],
+        ['checklist-instructions', draft.checklistInstructions],
+        ['checklist-rules', draft.checklistRules],
+        ['checklist-qa', draft.checklistQa]
+      ];
+      checklistFields.forEach(function(pair){
+        var ta = document.getElementById(pair[0]);
+        ta.value = pair[1] || '';
+        ta.dispatchEvent(new Event('input', {bubbles: true}));
+      });
+
       if (!draft.draftPanelHidden) setChecklistCollapsed(true);
       showSection('new-draft');
     });
@@ -1544,6 +1563,10 @@
       draftPanelHidden: document.getElementById('draft-panel').hidden,
       draftFableHtml: document.getElementById('draft-fable').innerHTML,
       draftGeminiHtml: document.getElementById('draft-gemini').innerHTML,
+      checklistRfiDetails: document.getElementById('checklist-rfi-details').value,
+      checklistInstructions: document.getElementById('checklist-instructions').value,
+      checklistRules: document.getElementById('checklist-rules').value,
+      checklistQa: document.getElementById('checklist-qa').value,
       savedAt: Date.now()
     };
 
