@@ -18,6 +18,12 @@
 </script>
 <style>
   body{ background:#f1f5f9; color:#0f172a; }
+  /* Tailwind's display utilities (.flex, .grid, etc.) tie the native
+     [hidden] attribute in CSS specificity, so whichever rule Tailwind
+     happens to generate last wins and can leave a "hidden" element
+     visibly rendered. Toggling hidden is used all over this page —
+     force it to actually hide regardless of what else is on the element. */
+  [hidden]{ display:none !important; }
   /* color language, reused deliberately across pages + categories:
      indigo #3D4A73 = New Draft · teal #2E615F = New RFIs
      gold #8A6A1E = proven-phrasing / memory · sage #3F6647 = won · rust #A34A34 = lost */
@@ -92,11 +98,14 @@
       </div>
 
       <div class="bg-white border-2 border-slate-300 rounded-xl p-4 mb-4">
-        <div class="flex items-center justify-between mb-3 pb-3 border-b-2 border-slate-300">
-          <span class="font-display font-semibold text-2xl text-slate-900">Draft Checklist</span>
+        <button type="button" id="checklist-toggle" aria-expanded="true" aria-controls="checklist-body" class="flex items-center justify-between w-full mb-3 pb-3 border-b-2 border-slate-300 text-left">
+          <span class="flex items-center gap-2">
+            <span class="chevron inline-block transition-transform" style="transform: rotate(180deg)">▾</span>
+            <span class="font-display font-semibold text-2xl text-slate-900">Draft Checklist</span>
+          </span>
           <span id="checklist-progress" class="font-mono text-sm px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">0 / 4</span>
-        </div>
-        <div class="grid gap-4">
+        </button>
+        <div class="grid gap-4" id="checklist-body">
           <div class="checklist-item">
             <div class="flex items-center gap-2 mb-1.5">
               <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-lg font-bold transition-colors">✓</span>
@@ -157,77 +166,6 @@
           <button type="button" id="api-key-clear-btn" class="text-base text-[#A34A34] font-semibold underline decoration-2 underline-offset-2 whitespace-nowrap">Remove key</button>
         </div>
         <p class="text-sm text-slate-500 mt-2 leading-relaxed">Stored only in this browser (localStorage) — never sent anywhere but directly to Anthropic's API from your own browser, never to any server of this app's, never committed to the repo. Get a key at <span class="font-mono">console.anthropic.com</span>. Without one, Generate Draft shows placeholder mockup text instead of a real draft.</p>
-      </div>
-
-      <div id="draft-panel" hidden class="bg-white border-2 border-slate-300 rounded-xl p-4">
-        <div class="draft-tabs flex gap-1 mb-3 pb-3 border-b-2 border-slate-300" id="draft-tabs">
-          <button type="button" data-tab="fable" aria-selected="true" class="border-2 border-[#3D4A73] text-white bg-[#3D4A73] text-lg font-semibold px-3 py-1.5 rounded-md transition-colors">Fable draft</button>
-          <button type="button" data-tab="gemini" aria-selected="false" class="border-2 border-slate-300 text-slate-600 bg-white text-lg font-semibold px-3 py-1.5 rounded-md transition-colors">Gemini draft</button>
-        </div>
-
-        <div class="flex justify-between items-baseline mb-2 pb-2 border-b-2 border-slate-300">
-          <span class="font-display font-semibold text-2xl text-slate-900">Technical Approach</span>
-          <span id="model-badge" hidden class="font-mono text-sm px-2 py-0.5 rounded-full bg-[#3D4A73] text-white">Claude Fable</span>
-        </div>
-
-        <p id="generation-status" hidden class="text-base text-slate-500 italic mb-2"></p>
-        <div id="draft-body" class="text-slate-700 leading-7">
-          <p id="draft-fable">Our approach decomposes the targeting stack into three independently testable modules — sensor fusion, engagement scoring, and weaponeering handoff — each exposed through a documented, government-owned interface. <mark class="bg-[#8A6A1E]/25 text-slate-900 font-medium px-1 rounded shadow-[inset_0_-2px_0_0_#8A6A1E]">This modular, open-systems architecture<span class="font-mono text-sm text-[#8A6A1E] font-bold align-super ml-0.5">used in 4 wins</span></mark> shortens the integration timeline for downstream primes and satisfies WOSA compliance without a full stack rewrite. Phase I validates the sensor fusion module against a recorded target set; Phase II demonstrates the full stack in a representative embedded environment with a live over-the-air weapons interface.</p>
-          <p id="draft-gemini" hidden>We propose a three-module targeting stack — sensor fusion, engagement scoring, and weaponeering handoff — connected through open, government-owned interfaces. Phase I proves out sensor fusion against a recorded target set; Phase II fields the complete stack in an embedded, WOSA-compliant environment with a live weapons interface.</p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2.5 mt-3.5 pt-3.5 border-t-2 border-slate-300">
-          <button type="button" id="regen-btn" class="bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors">Regenerate</button>
-          <button type="button" id="improve-btn" disabled class="bg-white border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">Improve selection</button>
-          <button type="button" disabled class="bg-white border-2 border-dashed border-slate-400 text-slate-500 text-lg font-semibold px-3.5 py-2 rounded-lg cursor-not-allowed">+ Comments <span class="font-normal text-slate-400">(tentative)</span></button>
-          <div class="relative ml-auto">
-            <button type="button" id="export-btn" class="bg-[#3D4A73] hover:bg-[#2E3A5F] text-white font-semibold text-lg px-3.5 py-2 rounded-lg transition-colors">Export as ▾</button>
-            <div id="export-menu" hidden class="absolute right-0 top-[calc(100%+6px)] bg-white border-2 border-slate-300 rounded-lg shadow-lg p-1.5 min-w-[170px] z-10">
-              <button type="button" class="block w-full text-left px-2.5 py-2 rounded-md hover:bg-slate-100 text-lg text-slate-800 font-medium">Word (.docx)</button>
-              <button type="button" class="block w-full text-left px-2.5 py-2 rounded-md hover:bg-slate-100 text-lg text-slate-800 font-medium">Google Doc</button>
-            </div>
-          </div>
-        </div>
-
-        <button type="button" id="referenced-toggle" aria-expanded="false" aria-controls="referenced-body" class="flex items-center gap-1.5 mt-4 text-slate-600 hover:text-slate-900 text-lg font-semibold">
-          <span class="chevron inline-block transition-transform">▾</span> Referenced from your private archive
-        </button>
-        <div id="referenced-body" hidden class="mt-3">
-          <p class="text-sm text-slate-500 mb-2.5 leading-relaxed">Real excerpts pulled from files in your Private RFI/RFP Archive — not used to write the draft text above (there's no real writing model behind this mockup), just showing what a real system would have available to reference.</p>
-          <div id="referenced-loading" class="text-lg text-slate-500 font-mono">Checking your private archive…</div>
-          <div id="referenced-empty" hidden class="text-lg text-slate-600">No files in your private archive yet — add some from the Reference Documents page.</div>
-          <ul id="referenced-list" hidden class="flex flex-col gap-2.5"></ul>
-        </div>
-
-        <button type="button" id="insights-toggle" aria-expanded="false" aria-controls="insights-body" class="flex items-center gap-1.5 mt-4 text-slate-600 hover:text-slate-900 text-lg font-semibold">
-          <span class="chevron inline-block transition-transform">▾</span> Trend insights for this topic
-        </button>
-        <div id="insights-body" hidden class="mt-3">
-          <div class="grid grid-cols-2 gap-2.5 mb-3.5">
-            <div class="bg-[#3D4A73]/[0.08] border-2 border-[#3D4A73]/25 rounded-lg p-3">
-              <div class="font-mono tabular-nums text-2xl font-bold text-[#3D4A73]">34%</div>
-              <div class="text-sm text-slate-600 mt-0.5 font-medium">win rate · 38 of 112 tagged</div>
-            </div>
-            <div class="bg-slate-100 border-2 border-slate-300 rounded-lg p-3">
-              <div class="font-mono tabular-nums text-2xl font-bold text-slate-900">128</div>
-              <div class="text-sm text-slate-600 mt-0.5 font-medium">drafts in memory</div>
-            </div>
-          </div>
-          <div class="flex flex-col gap-2">
-            <div class="flex justify-between items-center gap-2 px-2.5 py-2 bg-[#8A6A1E]/15 border-2 border-[#8A6A1E]/30 rounded-lg">
-              <span class="text-lg text-slate-800 italic font-medium">"modular, open-systems architecture"</span>
-              <span class="font-mono text-lg text-[#8A6A1E] font-bold whitespace-nowrap">4 wins</span>
-            </div>
-            <div class="flex justify-between items-center gap-2 px-2.5 py-2 bg-[#8A6A1E]/15 border-2 border-[#8A6A1E]/30 rounded-lg">
-              <span class="text-lg text-slate-800 italic font-medium">"sensor-agnostic engagement pipeline"</span>
-              <span class="font-mono text-lg text-[#8A6A1E] font-bold whitespace-nowrap">3 wins</span>
-            </div>
-            <div class="flex justify-between items-center gap-2 px-2.5 py-2 bg-[#8A6A1E]/15 border-2 border-[#8A6A1E]/30 rounded-lg">
-              <span class="text-lg text-slate-800 italic font-medium">"WOSA-compliant embedded stack"</span>
-              <span class="font-mono text-lg text-[#8A6A1E] font-bold whitespace-nowrap">3 wins</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       </div>
@@ -369,6 +307,80 @@
       </div>
 
       </div>
+      </div>
+
+      <!-- Full width, below both columns above — a generated draft is the
+           thing you actually need to read, not something to squeeze into
+           the narrow checklist column. -->
+      <div id="draft-panel" hidden class="bg-white border-2 border-slate-300 rounded-xl p-6 mt-6 w-full">
+        <div class="draft-tabs flex gap-1 mb-3 pb-3 border-b-2 border-slate-300" id="draft-tabs">
+          <button type="button" data-tab="fable" aria-selected="true" class="border-2 border-[#3D4A73] text-white bg-[#3D4A73] text-lg font-semibold px-3 py-1.5 rounded-md transition-colors">Fable draft</button>
+          <button type="button" data-tab="gemini" aria-selected="false" class="border-2 border-slate-300 text-slate-600 bg-white text-lg font-semibold px-3 py-1.5 rounded-md transition-colors">Gemini draft</button>
+        </div>
+
+        <div class="flex justify-between items-baseline mb-2 pb-2 border-b-2 border-slate-300">
+          <span class="font-display font-semibold text-2xl text-slate-900">Technical Approach</span>
+          <span id="model-badge" hidden class="font-mono text-sm px-2 py-0.5 rounded-full bg-[#3D4A73] text-white">Claude Fable</span>
+        </div>
+
+        <p id="generation-status" hidden class="text-base text-slate-500 italic mb-2"></p>
+        <div id="draft-body" class="text-slate-700 leading-7">
+          <div id="draft-fable"><p class="mb-3.5">Our approach decomposes the targeting stack into three independently testable modules — sensor fusion, engagement scoring, and weaponeering handoff — each exposed through a documented, government-owned interface. <mark class="bg-[#8A6A1E]/25 text-slate-900 font-medium px-1 rounded shadow-[inset_0_-2px_0_0_#8A6A1E]">This modular, open-systems architecture<span class="font-mono text-sm text-[#8A6A1E] font-bold align-super ml-0.5">used in 4 wins</span></mark> shortens the integration timeline for downstream primes and satisfies WOSA compliance without a full stack rewrite. Phase I validates the sensor fusion module against a recorded target set; Phase II demonstrates the full stack in a representative embedded environment with a live over-the-air weapons interface.</p></div>
+          <div id="draft-gemini" hidden><p class="mb-3.5">We propose a three-module targeting stack — sensor fusion, engagement scoring, and weaponeering handoff — connected through open, government-owned interfaces. Phase I proves out sensor fusion against a recorded target set; Phase II fields the complete stack in an embedded, WOSA-compliant environment with a live weapons interface.</p></div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5 mt-3.5 pt-3.5 border-t-2 border-slate-300">
+          <button type="button" id="regen-btn" class="bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors">Regenerate</button>
+          <button type="button" id="improve-btn" disabled class="bg-white border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">Improve selection</button>
+          <button type="button" disabled class="bg-white border-2 border-dashed border-slate-400 text-slate-500 text-lg font-semibold px-3.5 py-2 rounded-lg cursor-not-allowed">+ Comments <span class="font-normal text-slate-400">(tentative)</span></button>
+          <div class="relative ml-auto">
+            <button type="button" id="export-btn" class="bg-[#3D4A73] hover:bg-[#2E3A5F] text-white font-semibold text-lg px-3.5 py-2 rounded-lg transition-colors">Export as ▾</button>
+            <div id="export-menu" hidden class="absolute right-0 top-[calc(100%+6px)] bg-white border-2 border-slate-300 rounded-lg shadow-lg p-1.5 min-w-[170px] z-10">
+              <button type="button" class="block w-full text-left px-2.5 py-2 rounded-md hover:bg-slate-100 text-lg text-slate-800 font-medium">Word (.docx)</button>
+              <button type="button" class="block w-full text-left px-2.5 py-2 rounded-md hover:bg-slate-100 text-lg text-slate-800 font-medium">Google Doc</button>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" id="referenced-toggle" aria-expanded="false" aria-controls="referenced-body" class="flex items-center gap-1.5 mt-4 text-slate-600 hover:text-slate-900 text-lg font-semibold">
+          <span class="chevron inline-block transition-transform">▾</span> Referenced from your private archive
+        </button>
+        <div id="referenced-body" hidden class="mt-3">
+          <p class="text-sm text-slate-500 mb-2.5 leading-relaxed">Real excerpts pulled from files in your Private RFI/RFP Archive — not used to write the draft text above (there's no real writing model behind this mockup), just showing what a real system would have available to reference.</p>
+          <div id="referenced-loading" class="text-lg text-slate-500 font-mono">Checking your private archive…</div>
+          <div id="referenced-empty" hidden class="text-lg text-slate-600">No files in your private archive yet — add some from the Reference Documents page.</div>
+          <ul id="referenced-list" hidden class="flex flex-col gap-2.5"></ul>
+        </div>
+
+        <button type="button" id="insights-toggle" aria-expanded="false" aria-controls="insights-body" class="flex items-center gap-1.5 mt-4 text-slate-600 hover:text-slate-900 text-lg font-semibold">
+          <span class="chevron inline-block transition-transform">▾</span> Trend insights for this topic
+        </button>
+        <div id="insights-body" hidden class="mt-3">
+          <div class="grid grid-cols-2 gap-2.5 mb-3.5">
+            <div class="bg-[#3D4A73]/[0.08] border-2 border-[#3D4A73]/25 rounded-lg p-3">
+              <div class="font-mono tabular-nums text-2xl font-bold text-[#3D4A73]">34%</div>
+              <div class="text-sm text-slate-600 mt-0.5 font-medium">win rate · 38 of 112 tagged</div>
+            </div>
+            <div class="bg-slate-100 border-2 border-slate-300 rounded-lg p-3">
+              <div class="font-mono tabular-nums text-2xl font-bold text-slate-900">128</div>
+              <div class="text-sm text-slate-600 mt-0.5 font-medium">drafts in memory</div>
+            </div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <div class="flex justify-between items-center gap-2 px-2.5 py-2 bg-[#8A6A1E]/15 border-2 border-[#8A6A1E]/30 rounded-lg">
+              <span class="text-lg text-slate-800 italic font-medium">"modular, open-systems architecture"</span>
+              <span class="font-mono text-lg text-[#8A6A1E] font-bold whitespace-nowrap">4 wins</span>
+            </div>
+            <div class="flex justify-between items-center gap-2 px-2.5 py-2 bg-[#8A6A1E]/15 border-2 border-[#8A6A1E]/30 rounded-lg">
+              <span class="text-lg text-slate-800 italic font-medium">"sensor-agnostic engagement pipeline"</span>
+              <span class="font-mono text-lg text-[#8A6A1E] font-bold whitespace-nowrap">3 wins</span>
+            </div>
+            <div class="flex justify-between items-center gap-2 px-2.5 py-2 bg-[#8A6A1E]/15 border-2 border-[#8A6A1E]/30 rounded-lg">
+              <span class="text-lg text-slate-800 italic font-medium">"WOSA-compliant embedded stack"</span>
+              <span class="font-mono text-lg text-[#8A6A1E] font-bold whitespace-nowrap">3 wins</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="flex items-center justify-between gap-3 flex-wrap mt-6 pt-5 border-t-2 border-slate-300">
@@ -1582,8 +1594,35 @@
       }
     } catch (e) { /* archive not reachable — generate from what we have */ }
 
+    parts.push('FORMATTING: Write in clear paragraphs separated by a blank line — do not write one giant block of text. Estimate where each printed page would end (roughly 500-550 words per page, or whatever page limit the Solicitation Instructions state) and mark that point with a standalone line reading exactly "--- Page N ---" (e.g. "--- Page 2 ---") on its own line between paragraphs, so a reader can see the page breaks.');
     parts.push('Write the Technical Approach section now.');
     return parts.join('\n\n');
+  }
+
+  // Splits generated text into paragraphs (blank-line separated) and
+  // renders a "--- Page N ---" line as an actual visual divider instead
+  // of literal dashes — moderate spacing between blocks, not a big gap.
+  function renderDraftText(container, text){
+    container.innerHTML = '';
+    var blocks = text.split(/\n\s*\n/);
+    blocks.forEach(function(block){
+      var trimmed = block.trim();
+      if (!trimmed) return;
+      var pageMatch = trimmed.match(/^-{0,3}\s*page\s+(\d+)\s*-{0,3}$/i);
+      if (pageMatch) {
+        var divider = document.createElement('div');
+        divider.className = 'flex items-center gap-2.5 my-3 text-slate-400';
+        divider.innerHTML = '<span class="flex-1 border-t-2 border-slate-200"></span>' +
+          '<span class="font-mono text-sm uppercase tracking-wide whitespace-nowrap">Page ' + pageMatch[1] + '</span>' +
+          '<span class="flex-1 border-t-2 border-slate-200"></span>';
+        container.appendChild(divider);
+      } else {
+        var p = document.createElement('p');
+        p.className = 'mb-3.5';
+        p.textContent = trimmed;
+        container.appendChild(p);
+      }
+    });
   }
 
   // Hybrid: try this server's own key first (free for anyone using this
@@ -1650,8 +1689,8 @@
     var result = await callAnthropic(prompt);
 
     if (result.ok) {
-      fableEl.textContent = result.text;
-      geminiEl.textContent = result.text; // one real call — see note below
+      renderDraftText(fableEl, result.text);
+      renderDraftText(geminiEl, result.text); // one real call — see note below
       statusEl.hidden = false;
       statusEl.textContent = result.usedOwnKey
         ? '✓ Real draft generated using your saved API key. (Fable/Gemini tabs show the same real output — there is only one real model call here, not two.)'
@@ -1668,10 +1707,28 @@
     }
   }
 
+  // Draft Checklist collapse — same toggle pattern as the other
+  // collapsible sections on this page, but starts expanded (it's the
+  // main input area until a draft exists).
+  var checklistToggle = document.getElementById('checklist-toggle');
+  var checklistBody = document.getElementById('checklist-body');
+  function setChecklistCollapsed(collapsed){
+    checklistToggle.setAttribute('aria-expanded', String(!collapsed));
+    checklistBody.hidden = collapsed;
+    checklistToggle.querySelector('.chevron').style.transform = collapsed ? '' : 'rotate(180deg)';
+  }
+  checklistToggle.addEventListener('click', function(){
+    setChecklistCollapsed(checklistToggle.getAttribute('aria-expanded') === 'true');
+  });
+
   // generate draft — checklist is informational only, never required to click this
   document.getElementById('generate-draft-btn').addEventListener('click', function(){
     var panel = document.getElementById('draft-panel');
     panel.hidden = false;
+    // Once there's a draft to read, the checklist inputs make way for it
+    // — full width, and the point becomes reading the draft, not editing
+    // inputs. The checklist is still one click away via its own toggle.
+    setChecklistCollapsed(true);
     panel.scrollIntoView({behavior: 'smooth', block: 'nearest'});
     generateRealDraft();
   });
@@ -1958,77 +2015,115 @@
       listEl.hidden = false;
       listEl.innerHTML = '';
 
-      // Folders first (so a newly-created empty one is immediately
-      // visible — real confirmation Create Folder worked, not silence),
-      // then files. Folders link to their own directory listing instead
-      // of a HEAD-checked size, since "size" doesn't mean anything for one.
-      folders.forEach(function(folderPath){
-        var li = document.createElement('li');
-        li.className = 'flex items-center gap-2 bg-white border-2 border-slate-300 rounded-md px-2.5 py-1.5 text-lg';
-        // A plain SVG folder shape, not the 📁 emoji — that emoji's
-        // diagonal corner-fold rendered ambiguously enough to be read
-        // as a stray backslash in the folder name.
-        var iconEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        iconEl.setAttribute('viewBox', '0 0 20 16');
-        iconEl.setAttribute('width', '20');
-        iconEl.setAttribute('height', '16');
-        iconEl.setAttribute('fill', 'currentColor');
-        iconEl.setAttribute('aria-hidden', 'true');
-        iconEl.setAttribute('class', 'text-slate-500 flex-shrink-0');
-        var iconPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        iconPath.setAttribute('d', 'M1 3a1 1 0 0 1 1-1h4.5l1.5 2H18a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3z');
-        iconEl.appendChild(iconPath);
-        var segments = folderPath.split('/').filter(Boolean);
-        var link = document.createElement('a');
-        link.href = 'private-rfi-archive/' + segments.map(encodeURIComponent).join('/') + '/';
-        link.target = '_blank';
-        link.rel = 'noopener';
-        link.className = 'flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-slate-700 font-semibold underline decoration-2 underline-offset-2';
-        link.textContent = segments.join('/'); // e.g. "SBIR-25-101" — no trailing slash
-        li.append(iconEl, link);
-
-        // Upload only supports one folder level deep (matching
-        // /archive-upload and /archive-mkdir), so this inline button is
-        // only offered for top-level folders. Right-aligned via ml-auto
-        // on the row itself, which is already flex.
-        if (segments.length === 1) {
-          var folderUploadInput = document.createElement('input');
-          folderUploadInput.type = 'file';
-          folderUploadInput.hidden = true;
-          var folderUploadBtn = document.createElement('button');
-          folderUploadBtn.type = 'button';
-          folderUploadBtn.className = 'ml-auto bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap flex-shrink-0';
-          folderUploadBtn.textContent = 'Upload File';
-          folderUploadBtn.addEventListener('click', function(){ folderUploadInput.click(); });
-          folderUploadInput.addEventListener('change', function(){ uploadFile(folderUploadInput.files[0], segments[0]); });
-          li.append(folderUploadBtn, folderUploadInput);
-        }
-        listEl.appendChild(li);
+      // Build a real tree (folder -> its own files/subfolders nested
+      // inside it) instead of two flat lists (all folders, then every
+      // file's full path dumped underneath) — the flat version showed
+      // "SBIR-25-101/response.pdf" as text but never actually placed the
+      // file under its folder, so the connection wasn't visible.
+      var root = {folders: {}, files: []};
+      function treeNode(segments){
+        var node = root;
+        segments.forEach(function(seg){
+          if (!node.folders[seg]) node.folders[seg] = {folders: {}, files: []};
+          node = node.folders[seg];
+        });
+        return node;
+      }
+      folders.forEach(function(folderPath){ treeNode(folderPath.split('/').filter(Boolean)); });
+      names.forEach(function(relPath){
+        var segs = relPath.split('/');
+        var fileName = segs.pop();
+        treeNode(segs).files.push({name: fileName, relPath: relPath});
       });
 
-      // Build every file row first (no network involved), then fetch all
-      // the HEAD-request sizes in parallel — independent requests, no
-      // reason to wait for file 1's size before even asking about file 2.
-      var rows = names.map(function(relPath){
-        var baseName = relPath.split('/').pop();
-        var href = 'private-rfi-archive/' + relPath.split('/').map(encodeURIComponent).join('/');
-        var li = document.createElement('li');
-        li.className = 'flex items-center gap-2 bg-white border-2 border-slate-300 rounded-md px-2.5 py-1.5 text-lg';
-        var ext = (baseName.split('.').pop() || 'file').toUpperCase().slice(0, 4);
-        var extEl = document.createElement('span');
-        extEl.className = 'font-mono text-sm font-bold text-white bg-[#A34A34] px-1.5 rounded';
-        extEl.textContent = ext;
-        var link = document.createElement('a');
-        link.href = href;
-        link.target = '_blank';
-        link.rel = 'noopener';
-        link.className = 'flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[#7A5C3E] font-semibold underline decoration-2 underline-offset-2';
-        link.textContent = relPath; // includes the folder path, e.g. "SBIR-25-101/response.pdf"
-        li.append(extEl, link);
-        listEl.appendChild(li);
-        return {li: li, href: href};
-      });
+      var rows = []; // every file row, across all depths — for the HEAD-size pass below
+      var folderIconPath = 'M1 3a1 1 0 0 1 1-1h4.5l1.5 2H18a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3z';
 
+      function renderTree(node, pathSegments, container){
+        // Folders first (so a newly-created empty one is immediately
+        // visible — real confirmation Create Folder worked, not
+        // silence), then this folder's own files.
+        Object.keys(node.folders).sort().forEach(function(name){
+          var segments = pathSegments.concat([name]);
+          var childNode = node.folders[name];
+          var li = document.createElement('li');
+
+          var row = document.createElement('div');
+          row.className = 'flex items-center gap-2 bg-white border-2 border-slate-300 rounded-md px-2.5 py-1.5 text-lg';
+          // A plain SVG folder shape, not the 📁 emoji — that emoji's
+          // diagonal corner-fold rendered ambiguously enough to be read
+          // as a stray backslash in the folder name.
+          var iconEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          iconEl.setAttribute('viewBox', '0 0 20 16');
+          iconEl.setAttribute('width', '20');
+          iconEl.setAttribute('height', '16');
+          iconEl.setAttribute('fill', 'currentColor');
+          iconEl.setAttribute('aria-hidden', 'true');
+          iconEl.setAttribute('class', 'text-slate-500 flex-shrink-0');
+          var iconPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          iconPath.setAttribute('d', folderIconPath);
+          iconEl.appendChild(iconPath);
+          var link = document.createElement('a');
+          link.href = 'private-rfi-archive/' + segments.map(encodeURIComponent).join('/') + '/';
+          link.target = '_blank';
+          link.rel = 'noopener';
+          link.className = 'flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-slate-700 font-semibold underline decoration-2 underline-offset-2';
+          link.textContent = name; // just this folder's own name — its position in the tree already shows the path
+          row.append(iconEl, link);
+
+          // Upload only supports one folder level deep (matching
+          // /archive-upload and /archive-mkdir), so this inline button is
+          // only offered for top-level folders.
+          if (segments.length === 1) {
+            var folderUploadInput = document.createElement('input');
+            folderUploadInput.type = 'file';
+            folderUploadInput.hidden = true;
+            var folderUploadBtn = document.createElement('button');
+            folderUploadBtn.type = 'button';
+            folderUploadBtn.className = 'ml-auto bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap flex-shrink-0';
+            folderUploadBtn.textContent = 'Upload File';
+            folderUploadBtn.addEventListener('click', function(){ folderUploadInput.click(); });
+            folderUploadInput.addEventListener('change', function(){ uploadFile(folderUploadInput.files[0], segments[0]); });
+            row.append(folderUploadBtn, folderUploadInput);
+          }
+          li.appendChild(row);
+
+          // Nested children render into their own indented sub-list,
+          // inside this folder's own list item — a real DOM tree, with a
+          // left border as the visual "connecting line" down to its
+          // contents, instead of a second flat list with no relationship shown.
+          var childList = document.createElement('ul');
+          childList.className = 'flex flex-col gap-1.5 mt-1.5 ml-4 pl-4 border-l-2 border-slate-300';
+          renderTree(childNode, segments, childList);
+          if (childList.children.length) li.appendChild(childList);
+
+          container.appendChild(li);
+        });
+
+        node.files.slice().sort(function(a, b){ return a.name.localeCompare(b.name); }).forEach(function(file){
+          var href = 'private-rfi-archive/' + file.relPath.split('/').map(encodeURIComponent).join('/');
+          var li = document.createElement('li');
+          li.className = 'flex items-center gap-2 bg-white border-2 border-slate-300 rounded-md px-2.5 py-1.5 text-lg';
+          var ext = (file.name.split('.').pop() || 'file').toUpperCase().slice(0, 4);
+          var extEl = document.createElement('span');
+          extEl.className = 'font-mono text-sm font-bold text-white bg-[#A34A34] px-1.5 rounded';
+          extEl.textContent = ext;
+          var link = document.createElement('a');
+          link.href = href;
+          link.target = '_blank';
+          link.rel = 'noopener';
+          link.className = 'flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[#7A5C3E] font-semibold underline decoration-2 underline-offset-2';
+          link.textContent = file.name; // just the filename — its indentation already shows which folder it's in
+          li.append(extEl, link);
+          container.appendChild(li);
+          rows.push({li: li, href: href});
+        });
+      }
+      renderTree(root, [], listEl);
+
+      // Fetch every file's HEAD-request size in parallel, independent of
+      // depth — no reason to wait for one file's size before asking
+      // about the next.
       await mapWithConcurrencyLimit(rows, ARCHIVE_FETCH_CONCURRENCY, async function(row){
         try {
           var headRes = await fetch(row.href, {method: 'HEAD'});
