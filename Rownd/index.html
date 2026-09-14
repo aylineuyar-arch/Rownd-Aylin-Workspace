@@ -154,7 +154,7 @@
 
         <div class="flex justify-between items-baseline mb-2 pb-2 border-b-2 border-slate-300">
           <span class="font-display font-semibold text-2xl text-slate-900">Technical Approach</span>
-          <span id="model-badge" class="font-mono text-sm px-2 py-0.5 rounded-full bg-[#3D4A73] text-white">Claude Fable</span>
+          <span id="model-badge" hidden class="font-mono text-sm px-2 py-0.5 rounded-full bg-[#3D4A73] text-white">Claude Fable</span>
         </div>
 
         <div id="draft-body" class="text-slate-700 leading-7">
@@ -798,7 +798,13 @@
       else if (selected && !isFable) b.className = 'border-2 border-[#2E615F] text-white bg-[#2E615F] text-lg font-semibold px-3 py-1.5 rounded-md transition-colors';
       else b.className = 'border-2 border-slate-300 text-slate-600 bg-white text-lg font-semibold px-3 py-1.5 rounded-md transition-colors';
     });
+    // The badge only earns its place when the tabs are hidden (single-
+    // model mode) — that's the one case where nothing else on screen
+    // says which model this is. In "Both" mode the highlighted tab
+    // already says that, so showing the same name a second time here
+    // was pure repetition.
     var badge = document.getElementById('model-badge');
+    badge.hidden = !tabsBar.hidden;
     badge.textContent = which === 'fable' ? 'Claude Fable' : 'Gemini';
     badge.className = 'font-mono text-sm px-2 py-0.5 rounded-full text-white ' +
       (which === 'fable' ? 'bg-[#3D4A73]' : 'bg-[#2E615F]');

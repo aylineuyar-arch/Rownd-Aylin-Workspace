@@ -4,6 +4,10 @@ Every push to this repo is logged here, newest first, in plain language — what
 
 ## 2026-09-13
 
+- **Removed the redundant model badge next to "Technical Approach" when it duplicates the draft tabs.** In "Both" mode, the highlighted tab (e.g. "Fable draft") already says which model you're looking at, so the "Claude Fable" badge next to the heading was saying the same thing a second time. The badge now only shows in single-model mode (Fable-only or Gemini-only), where the tabs are hidden entirely and it's the sole indicator of which model generated the draft — genuinely needed there, not redundant. Verified all three transitions: hidden by default (Both mode), visible when switching to a single model, hidden again when switching back to Both.
+
+
+
 - **Q&A summary now surfaces what's actually being asked, instead of repeating the category badges.** The summary sentence used to say "mostly about General and Technical" — but the category breakdown badges directly above it already show that exact breakdown, so the sentence was pure repetition ("this means nothing" was the accurate complaint). Rewrote it to quote each real question instead (the actual extracted text, not a synthesized category label), and dropped the generic "None of the answers use clearly binding language..." filler that appeared even when there was nothing to say — the binding-language mention now only appears when an answer actually flags as binding. Verified with real Q&A text: the summary now reads as actual question content, category badges stayed separate and un-duplicated, and the no-flagged-answers case no longer shows filler text.
 
 
