@@ -774,12 +774,27 @@
   }
   document.querySelectorAll('.topic-result').forEach(wireTopicResult);
 
+  // Manually-entered topics persist across reloads the same way saved
+  // drafts do — otherwise a topic you just typed in is gone the moment
+  // you refresh, same complaint as Drafts in Progress resetting to zero.
+  var SAVED_FEED_TOPICS_KEY = 'draftConsoleSavedFeedTopics';
+  function getSavedFeedTopics(){
+    try { return JSON.parse(localStorage.getItem(SAVED_FEED_TOPICS_KEY) || '[]'); }
+    catch (e) { return []; }
+  }
+  function setSavedFeedTopics(list){
+    try { localStorage.setItem(SAVED_FEED_TOPICS_KEY, JSON.stringify(list)); }
+    catch (e) {}
+  }
+
   // Adds a manually-entered topic into the feed list so it's not lost
   // the moment you navigate away — skips creating a row if one with the
   // same topic code is already there (matching against the mock feed
   // entries and any previously auto-saved ones alike, since they're all
-  // in the same list).
-  function addOrSkipFeedTopic(topic, code){
+  // in the same list). `persist` is false only when restoring already-
+  // saved topics at page load, so they aren't written back to storage
+  // a second time.
+  function addOrSkipFeedTopic(topic, code, persist){
     var already = Array.from(document.querySelectorAll('.topic-result')).some(function(i){ return i.dataset.code === code; });
     if (already) return;
     var item = document.createElement('div');
@@ -794,7 +809,17 @@
     wireTopicResult(item);
     var feed = document.getElementById('source-feed');
     feed.insertBefore(item, feed.firstChild);
+    if (persist !== false) {
+      var saved = getSavedFeedTopics();
+      saved.unshift({topic: topic, code: code});
+      setSavedFeedTopics(saved);
+    }
   }
+
+  // Restore previously-saved manual topics, oldest first so re-adding
+  // them to the top of the feed one at a time reproduces the exact
+  // order they were originally saved in.
+  getSavedFeedTopics().slice().reverse().forEach(function(t){ addOrSkipFeedTopic(t.topic, t.code, false); });
 
   // manual topic entry: enable "Use for new draft" once both fields are filled
   var manualTitle = document.getElementById('manual-topic-title');
@@ -1442,58 +1467,90 @@
     runQAGuidance(val);
   });
 
-  // save draft: snapshot current topic + proposal name + checklist progress
-  // + the actual generated draft content (not just a pointer back to the
-  // topic) into a new row at the top of Drafts in Progress. The draft
-  // HTML is kept as a plain JS property on the button (not a data-*
-  // attribute) — it can be arbitrarily large generated text, and going
-  // through an HTML attribute would mean escaping/unescaping it for no
-  // benefit since nothing outside this page ever needs to read it.
-  document.getElementById('save-draft-btn').addEventListener('click', function(){
-    var proposalName = document.getElementById('proposal-name').value.trim() || 'Untitled Proposal';
-    var topic = document.getElementById('topic-title-el').textContent;
-    var code = document.getElementById('topic-code-el').textContent.split(' · ')[0];
-    var progress = document.getElementById('checklist-progress').textContent;
-    var progressParts = progress.split(' / ');
-    var progressDone = progressParts[0] === progressParts[1];
-    var draftPanelHidden = document.getElementById('draft-panel').hidden;
+  // Drafts in Progress persists across reloads via localStorage — a
+  // page-memory-only list is indistinguishable from data loss the
+  // moment you refresh, which defeats the point of a "saved drafts"
+  // section. Each entry carries the actual generated draft HTML, not
+  // just a pointer back to the topic, so Resume restores the real thing.
+  var SAVED_DRAFTS_KEY = 'draftConsoleSavedDrafts';
+  function getSavedDrafts(){
+    try { return JSON.parse(localStorage.getItem(SAVED_DRAFTS_KEY) || '[]'); }
+    catch (e) { return []; }
+  }
+  function setSavedDrafts(list){
+    try { localStorage.setItem(SAVED_DRAFTS_KEY, JSON.stringify(list)); }
+    catch (e) { /* storage full or unavailable — the row still rendered for this session */ }
+  }
+  function formatSavedAt(ts){
+    var mins = Math.floor((Date.now() - ts) / 60000);
+    if (mins < 1) return 'Saved just now';
+    if (mins < 60) return 'Saved ' + mins + ' minute' + (mins === 1 ? '' : 's') + ' ago';
+    var hours = Math.floor(mins / 60);
+    if (hours < 24) return 'Saved ' + hours + ' hour' + (hours === 1 ? '' : 's') + ' ago';
+    var days = Math.floor(hours / 24);
+    return 'Saved ' + days + ' day' + (days === 1 ? '' : 's') + ' ago';
+  }
 
+  function renderDraftRow(draft, prepend){
     var row = document.createElement('div');
     row.className = 'draft-progress-row flex items-center gap-3.5 py-3 border-b-2 border-slate-300';
     row.innerHTML =
       '<div class="flex-1 min-w-0">' +
         '<div class="font-semibold text-xl text-slate-900"></div>' +
-        '<div class="text-lg text-slate-600 mt-0.5">Saved just now</div>' +
+        '<div class="text-lg text-slate-600 mt-0.5"></div>' +
       '</div>' +
       '<span class="font-mono text-sm font-bold px-2.5 py-1 rounded-full"></span>' +
       '<button type="button" class="resume-draft-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors">Resume</button>';
-    row.querySelector('.font-semibold').textContent = proposalName + ' — ' + topic;
+    row.querySelector('.font-semibold').textContent = draft.proposalName + ' — ' + draft.topic;
+    row.querySelector('.text-slate-600').textContent = formatSavedAt(draft.savedAt);
     var badge = row.querySelector('span');
-    badge.textContent = progress;
-    badge.className += progressDone ? ' bg-[#3E5C7A] text-white' : ' bg-slate-100 text-slate-600';
+    badge.textContent = draft.progress;
+    badge.className += draft.progressDone ? ' bg-[#3E5C7A] text-white' : ' bg-slate-100 text-slate-600';
     var resumeBtn = row.querySelector('.resume-draft-btn');
-    resumeBtn.dataset.topic = topic;
-    resumeBtn.dataset.code = code;
-    resumeBtn.dataset.proposalName = proposalName === 'Untitled Proposal' ? '' : proposalName;
-    resumeBtn._draftPanelHidden = draftPanelHidden;
-    resumeBtn._draftFableHtml = document.getElementById('draft-fable').innerHTML;
-    resumeBtn._draftGeminiHtml = document.getElementById('draft-gemini').innerHTML;
     resumeBtn.addEventListener('click', function(){
       topicManuallySet = true;
-      document.getElementById('topic-title-el').textContent = resumeBtn.dataset.topic;
-      document.getElementById('topic-code-el').textContent = resumeBtn.dataset.code + ' · 26.BZ · USAF/AFMC';
-      document.getElementById('proposal-name').value = resumeBtn.dataset.proposalName;
-      document.getElementById('draft-fable').innerHTML = resumeBtn._draftFableHtml;
-      document.getElementById('draft-gemini').innerHTML = resumeBtn._draftGeminiHtml;
-      document.getElementById('draft-panel').hidden = resumeBtn._draftPanelHidden;
-      if (!resumeBtn._draftPanelHidden) setChecklistCollapsed(true);
+      document.getElementById('topic-title-el').textContent = draft.topic;
+      document.getElementById('topic-code-el').textContent = draft.code + ' · 26.BZ · USAF/AFMC';
+      document.getElementById('proposal-name').value = draft.proposalName === 'Untitled Proposal' ? '' : draft.proposalName;
+      document.getElementById('draft-fable').innerHTML = draft.draftFableHtml;
+      document.getElementById('draft-gemini').innerHTML = draft.draftGeminiHtml;
+      document.getElementById('draft-panel').hidden = draft.draftPanelHidden;
+      if (!draft.draftPanelHidden) setChecklistCollapsed(true);
       showSection('new-draft');
     });
 
     var list = document.getElementById('drafts-in-progress-list');
-    list.insertBefore(row, list.firstChild);
+    if (prepend) list.insertBefore(row, list.firstChild);
+    else list.appendChild(row);
     document.getElementById('drafts-in-progress-empty').hidden = true;
     document.getElementById('drafts-in-progress-wrap').hidden = false;
+  }
+
+  // Restore anything saved in a previous session, oldest last (newest
+  // stays at the top, matching the order they were originally saved in).
+  getSavedDrafts().forEach(function(draft){ renderDraftRow(draft, false); });
+
+  document.getElementById('save-draft-btn').addEventListener('click', function(){
+    var proposalName = document.getElementById('proposal-name').value.trim() || 'Untitled Proposal';
+    var progress = document.getElementById('checklist-progress').textContent;
+    var progressParts = progress.split(' / ');
+
+    var draft = {
+      proposalName: proposalName,
+      topic: document.getElementById('topic-title-el').textContent,
+      code: document.getElementById('topic-code-el').textContent.split(' · ')[0],
+      progress: progress,
+      progressDone: progressParts[0] === progressParts[1],
+      draftPanelHidden: document.getElementById('draft-panel').hidden,
+      draftFableHtml: document.getElementById('draft-fable').innerHTML,
+      draftGeminiHtml: document.getElementById('draft-gemini').innerHTML,
+      savedAt: Date.now()
+    };
+
+    var saved = getSavedDrafts();
+    saved.unshift(draft);
+    setSavedDrafts(saved);
+    renderDraftRow(draft, true);
 
     var confirm = document.getElementById('save-draft-confirm');
     confirm.hidden = false;
