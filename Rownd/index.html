@@ -1927,10 +1927,18 @@
           setChecklistChecked(document.getElementById('checklist-rfi-details').closest('.checklist-item'), true);
         }
       }
+      // Files attached while building a new draft used to only ever live
+      // in this page's memory — gone on reload, nothing to show for it.
+      // These two zones are specifically about the draft's own source
+      // material, so persist what's dropped here into the private
+      // archive instead of losing it.
+      if (zone.dataset.upload === 'nd' || zone.dataset.upload === 'checklist-rfi') {
+        added.forEach(function(f){ persistToNewRfiProposals(f, zone); });
+      }
     }
 
     zone.addEventListener('click', function(e){
-      if (e.target.closest('li')) return;
+      if (e.target.closest('li') || e.target.closest('.upload-persist-status')) return;
       input.click();
     });
     input.addEventListener('click', function(e){ e.stopPropagation(); });
@@ -2344,6 +2352,69 @@
       errEl.textContent = await res.text();
       errEl.hidden = false;
     }
+  }
+
+  // Files attached on the New Draft page (the top "reference files" box
+  // and the checklist's "RFI details" upload) get saved into this one
+  // shared archive folder instead of only living in this page's memory.
+  // The folder is created at most once per page load — a 409 from
+  // /archive-mkdir just means it's already there, which is fine.
+  // Matches the folder you already created yourself via Create Folder —
+  // targeting this exact name (and casing) instead of inventing a new
+  // one, so uploads land in the folder you already made for this.
+  var NEW_RFI_PROPOSALS_FOLDER = 'new RFI proposals';
+  var newRfiProposalsFolderReady = null;
+  function ensureNewRfiProposalsFolder(){
+    if (!newRfiProposalsFolderReady) {
+      newRfiProposalsFolderReady = fetch('/archive-mkdir', {method: 'POST', body: NEW_RFI_PROPOSALS_FOLDER})
+        .catch(function(){ /* archive not reachable at all — persist attempt below will also fail, harmlessly */ });
+    }
+    return newRfiProposalsFolderReady;
+  }
+
+  function getUploadPersistStatusEl(zone){
+    var el = zone.querySelector('.upload-persist-status');
+    if (!el) {
+      el = document.createElement('p');
+      el.className = 'upload-persist-status text-sm text-slate-500 mt-1.5';
+      zone.appendChild(el);
+    }
+    return el;
+  }
+
+  async function persistToNewRfiProposals(file, zone){
+    if (!file) return;
+    var statusEl = getUploadPersistStatusEl(zone);
+    statusEl.textContent = 'Saving "' + file.name + '" to your archive…';
+    await ensureNewRfiProposalsFolder();
+    try {
+      var res = await fetch('/archive-upload', {
+        method: 'POST',
+        headers: {
+          'X-File-Name': encodeURIComponent(file.name),
+          'X-Target-Folder': encodeURIComponent(NEW_RFI_PROPOSALS_FOLDER)
+        },
+        body: file
+      });
+      if (res.ok) {
+        statusEl.textContent = '✓ Saved to Private Archive / ' + NEW_RFI_PROPOSALS_FOLDER;
+        loadPrivateArchive();
+      } else if (res.status === 409) {
+        // A file with this exact name is already in that folder — this
+        // IS the "don't duplicate" case, not a failure. Nothing new to
+        // save, so nothing changed, but also nothing lost.
+        statusEl.textContent = '✓ Already in Private Archive / ' + NEW_RFI_PROPOSALS_FOLDER;
+      } else {
+        statusEl.textContent = 'Could not save to the archive — still usable for this session.';
+      }
+    } catch (e) {
+      // No local server reachable (e.g. viewing the deployed GitHub
+      // Pages site, which has no backend at all) — extraction/attaching
+      // still works for this page load, it just won't persist.
+      statusEl.textContent = 'Archive not reachable — still usable for this session.';
+    }
+    clearTimeout(statusEl._hideTimer);
+    statusEl._hideTimer = setTimeout(function(){ statusEl.textContent = ''; }, 4000);
   }
 
   loadPrivateArchive();
