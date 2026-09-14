@@ -175,6 +175,16 @@
           </div>
         </div>
 
+        <button type="button" id="referenced-toggle" aria-expanded="false" aria-controls="referenced-body" class="flex items-center gap-1.5 mt-4 text-slate-600 hover:text-slate-900 text-lg font-semibold">
+          <span class="chevron inline-block transition-transform">▾</span> Referenced from your private archive
+        </button>
+        <div id="referenced-body" hidden class="mt-3">
+          <p class="text-sm text-slate-500 mb-2.5 leading-relaxed">Real excerpts pulled from files in your Private RFI/RFP Archive — not used to write the draft text above (there's no real writing model behind this mockup), just showing what a real system would have available to reference.</p>
+          <div id="referenced-loading" class="text-lg text-slate-500 font-mono">Checking your private archive…</div>
+          <div id="referenced-empty" hidden class="text-lg text-slate-600">No files in your private archive yet — add some from the Reference Documents page.</div>
+          <ul id="referenced-list" hidden class="flex flex-col gap-2.5"></ul>
+        </div>
+
         <button type="button" id="insights-toggle" aria-expanded="false" aria-controls="insights-body" class="flex items-center gap-1.5 mt-4 text-slate-600 hover:text-slate-900 text-lg font-semibold">
           <span class="chevron inline-block transition-transform">▾</span> Trend insights for this topic
         </button>
@@ -1493,6 +1503,83 @@
     document.getElementById('insights-body').hidden = expanded;
     insightsToggle.querySelector('.chevron').style.transform = expanded ? '' : 'rotate(180deg)';
   });
+
+  // referenced-documents collapse
+  var referencedToggle = document.getElementById('referenced-toggle');
+  var referencedLoaded = false;
+  referencedToggle.addEventListener('click', function(){
+    var expanded = referencedToggle.getAttribute('aria-expanded') === 'true';
+    referencedToggle.setAttribute('aria-expanded', String(!expanded));
+    document.getElementById('referenced-body').hidden = expanded;
+    referencedToggle.querySelector('.chevron').style.transform = expanded ? '' : 'rotate(180deg)';
+    if (!expanded && !referencedLoaded) { referencedLoaded = true; loadReferencedDocuments(); }
+  });
+
+  // Pulls real files from the private archive and, for each PDF, extracts
+  // a real excerpt via the same pdf.js path used for RFI uploads —
+  // pdfjsLib.getDocument({url}) hits the archive server directly, so it
+  // automatically carries the session cookie (or doesn't) exactly like
+  // any other same-origin fetch here. A file that isn't accessible yet
+  // (not logged in) just shows its name with no excerpt, since the
+  // listing itself is public but the content isn't — same rule as
+  // everywhere else in the archive.
+  async function extractArchiveExcerpt(fileUrl){
+    try {
+      var pdf = await pdfjsLib.getDocument({url: fileUrl}).promise;
+      var page = await pdf.getPage(1);
+      var content = await page.getTextContent();
+      var text = itemsToText(content.items);
+      if (!text) return null;
+      return text.length > 220 ? text.slice(0, 220).trim() + '…' : text;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function loadReferencedDocuments(){
+    var loadingEl = document.getElementById('referenced-loading');
+    var emptyEl = document.getElementById('referenced-empty');
+    var listEl = document.getElementById('referenced-list');
+    try {
+      var folders = [];
+      var names = (await walkArchiveDir('', 0, folders)).sort();
+      var pdfNames = names.filter(function(n){ return /\.pdf$/i.test(n); });
+
+      loadingEl.hidden = true;
+      if (!pdfNames.length) { emptyEl.hidden = false; listEl.hidden = true; return; }
+
+      emptyEl.hidden = true;
+      listEl.hidden = false;
+      listEl.innerHTML = '';
+
+      for (var i = 0; i < pdfNames.length; i++) {
+        var relPath = pdfNames[i];
+        var href = 'private-rfi-archive/' + relPath.split('/').map(encodeURIComponent).join('/');
+        var li = document.createElement('li');
+        li.className = 'bg-slate-50 border-2 border-slate-200 rounded-lg p-3';
+        var nameEl = document.createElement('div');
+        nameEl.className = 'font-mono text-sm font-bold text-slate-700 mb-1';
+        nameEl.textContent = relPath;
+        li.appendChild(nameEl);
+        var excerpt = await extractArchiveExcerpt(href);
+        var excerptEl = document.createElement('div');
+        if (excerpt) {
+          excerptEl.className = 'text-lg text-slate-700 leading-relaxed';
+          excerptEl.textContent = '"' + excerpt + '"';
+        } else {
+          excerptEl.className = 'text-base text-slate-500 italic';
+          excerptEl.textContent = 'Log in to the archive above to include a real excerpt from this file.';
+        }
+        li.appendChild(excerptEl);
+        listEl.appendChild(li);
+      }
+    } catch (err) {
+      loadingEl.hidden = true;
+      emptyEl.hidden = false;
+      emptyEl.textContent = 'Could not reach the private archive — this only works when running locally via serve_no_cache.py.';
+      listEl.hidden = true;
+    }
+  }
 
   // collapsible Objective / Description / Phase I / Phase II blocks in the sidebar
   document.querySelectorAll('.extract-collapse-toggle').forEach(function(toggle){
