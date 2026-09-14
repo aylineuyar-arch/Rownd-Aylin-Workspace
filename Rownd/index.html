@@ -933,7 +933,20 @@
         out += ' ' + line; // an ordinary wrap — reflow into the running paragraph
       }
     }
-    return out.trim();
+    return oneSentencePerLine(out.trim());
+  }
+
+  // A single reflowed paragraph is technically correct prose, but a
+  // dense multi-sentence requirement paragraph is still a wall of text
+  // to scan by eye. Putting one sentence per line — a plain textarea
+  // can't draw an actual divider, but a real line break between
+  // sentences reads like a checklist instead of a legal paragraph. Not
+  // perfect (an abbreviation like "U.S." can trigger a false split),
+  // but a wrong extra line break costs nothing here.
+  function oneSentencePerLine(text){
+    return text.split('\n\n').map(function(paragraph){
+      return paragraph.replace(/([.!?])\s+(?=[A-Z"“(])/g, '$1\n').trim();
+    }).join('\n\n');
   }
 
   async function extractPdfText(file){

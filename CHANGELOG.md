@@ -4,6 +4,10 @@ Every push to this repo is logged here, newest first, in plain language — what
 
 ## 2026-09-13
 
+- **One sentence per line for extracted PDF text — correct reflow alone wasn't actually readable.** Natural prose reflow (previous fix) was technically correct, but a genuinely dense multi-sentence requirement paragraph is still a wall of text to scan by eye — confirmed by a real screenshot of "Rules and component list" still reading as one 10-sentence block. A plain `<textarea>` can't draw an actual divider, so `oneSentencePerLine()` inserts a real line break after each sentence-ending punctuation mark instead, making dense text read like a checklist. Verified: a paragraph reflowed from 4 word-wrapped PDF lines now shows as 3 clean, separate one-sentence lines instead of one run-on paragraph, with genuine paragraph breaks (blank lines in the source) still preserved separately.
+
+
+
 - **The line-break fix from earlier today was wrong — replaced it with one that actually reflows text.** `item.hasEOL` fires identically for an ordinary word-wrap at the page margin and a genuine paragraph break, so turning every one into a literal newline (the earlier fix) just replicated the PDF's arbitrary column width as mid-sentence line breaks — confirmed by the user's screenshot showing the exact same unreadable wall of text, just wrapped differently. Rewrote `itemsToText` to use each line's actual vertical position: a gap noticeably larger than the page's typical line-to-line spacing means a real blank line was in the source (kept as a paragraph break); a normal-sized gap means the line simply wrapped at the margin (reflowed into the running paragraph with a single space, like real prose). Verified with a PDF built specifically to distinguish the two cases: 3 word-wrapped lines of one paragraph correctly reflowed into a single natural sentence, a genuine blank line before a second paragraph was correctly preserved as a real paragraph break, and the structured OBJECTIVE/DESCRIPTION/PHASE section parser still correctly detected and extracted each section afterward.
 
 
