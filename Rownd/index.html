@@ -136,14 +136,27 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2.5 mb-4">
+      <div class="flex items-center gap-2.5 mb-2 flex-wrap">
         <span class="text-lg text-slate-600 font-medium">Generate with</span>
         <div class="inline-flex bg-white border-2 border-slate-300 rounded-lg p-0.5 gap-0.5" role="group" aria-label="Model">
           <button type="button" data-model="fable" aria-pressed="false" class="model-btn px-3 py-1.5 rounded-md text-slate-600 font-semibold text-lg transition-colors">Claude Fable</button>
           <button type="button" data-model="gemini" aria-pressed="false" class="model-btn px-3 py-1.5 rounded-md text-slate-600 font-semibold text-lg transition-colors">Gemini</button>
           <button type="button" data-model="both" aria-pressed="true" class="model-btn px-3 py-1.5 rounded-md bg-slate-800 text-white font-semibold text-lg transition-colors">Both</button>
         </div>
+        <button type="button" id="api-key-toggle" class="text-base text-slate-500 hover:text-slate-700 underline decoration-2 underline-offset-2 font-medium">
+          <span id="api-key-status">Add your Anthropic API key for real generation</span>
+        </button>
         <button type="button" id="generate-draft-btn" class="bg-[#3D4A73] hover:bg-[#2E3A5F] text-white font-semibold text-lg px-4 py-2 rounded-lg transition-colors ml-auto">Generate Draft</button>
+      </div>
+
+      <div id="api-key-panel" hidden class="bg-slate-50 border-2 border-slate-300 rounded-lg p-3 mb-4">
+        <label class="block text-lg font-semibold text-slate-800 mb-1.5">Your Anthropic API key</label>
+        <div class="flex gap-2 items-center flex-wrap">
+          <input type="password" id="api-key-input" placeholder="sk-ant-…" class="bg-white border-2 border-slate-300 rounded-lg px-3 py-2 text-lg flex-1 min-w-[220px]">
+          <button type="button" id="api-key-save-btn" class="bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap">Save</button>
+          <button type="button" id="api-key-clear-btn" class="text-base text-[#A34A34] font-semibold underline decoration-2 underline-offset-2 whitespace-nowrap">Remove key</button>
+        </div>
+        <p class="text-sm text-slate-500 mt-2 leading-relaxed">Stored only in this browser (localStorage) — never sent anywhere but directly to Anthropic's API from your own browser, never to any server of this app's, never committed to the repo. Get a key at <span class="font-mono">console.anthropic.com</span>. Without one, Generate Draft shows placeholder mockup text instead of a real draft.</p>
       </div>
 
       <div id="draft-panel" hidden class="bg-white border-2 border-slate-300 rounded-xl p-4">
@@ -157,6 +170,7 @@
           <span id="model-badge" hidden class="font-mono text-sm px-2 py-0.5 rounded-full bg-[#3D4A73] text-white">Claude Fable</span>
         </div>
 
+        <p id="generation-status" hidden class="text-base text-slate-500 italic mb-2"></p>
         <div id="draft-body" class="text-slate-700 leading-7">
           <p id="draft-fable">Our approach decomposes the targeting stack into three independently testable modules — sensor fusion, engagement scoring, and weaponeering handoff — each exposed through a documented, government-owned interface. <mark class="bg-[#8A6A1E]/25 text-slate-900 font-medium px-1 rounded shadow-[inset_0_-2px_0_0_#8A6A1E]">This modular, open-systems architecture<span class="font-mono text-sm text-[#8A6A1E] font-bold align-super ml-0.5">used in 4 wins</span></mark> shortens the integration timeline for downstream primes and satisfies WOSA compliance without a full stack rewrite. Phase I validates the sensor fusion module against a recorded target set; Phase II demonstrates the full stack in a representative embedded environment with a live over-the-air weapons interface.</p>
           <p id="draft-gemini" hidden>We propose a three-module targeting stack — sensor fusion, engagement scoring, and weaponeering handoff — connected through open, government-owned interfaces. Phase I proves out sensor fusion against a recorded target set; Phase II fields the complete stack in an embedded, WOSA-compliant environment with a live weapons interface.</p>
@@ -1482,12 +1496,186 @@
     document.getElementById('improve-btn').disabled = !within;
   });
 
+  // ---- Real draft generation (hybrid: local server key, then the
+  // visitor's own key, then the original mockup text) ----
+  var ANTHROPIC_MODEL = 'claude-sonnet-5';
+  var API_KEY_STORAGE_KEY = 'draftConsoleAnthropicApiKey';
+  // Saved once, up front, so a failed/skipped real generation can restore
+  // the original mockup paragraphs exactly instead of leaving stale text
+  // or an empty panel behind.
+  var MOCK_FABLE_HTML = document.getElementById('draft-fable').innerHTML;
+  var MOCK_GEMINI_HTML = document.getElementById('draft-gemini').innerHTML;
+
+  function getStoredApiKey(){
+    try { return localStorage.getItem(API_KEY_STORAGE_KEY) || ''; } catch (e) { return ''; }
+  }
+  function refreshApiKeyStatus(){
+    document.getElementById('api-key-status').textContent = getStoredApiKey()
+      ? 'Your Anthropic API key is saved in this browser'
+      : 'Add your Anthropic API key for real generation';
+  }
+  refreshApiKeyStatus();
+
+  var apiKeyToggle = document.getElementById('api-key-toggle');
+  var apiKeyPanel = document.getElementById('api-key-panel');
+  apiKeyToggle.addEventListener('click', function(){
+    apiKeyPanel.hidden = !apiKeyPanel.hidden;
+    if (!apiKeyPanel.hidden) document.getElementById('api-key-input').value = getStoredApiKey();
+  });
+  document.getElementById('api-key-save-btn').addEventListener('click', function(){
+    var val = document.getElementById('api-key-input').value.trim();
+    if (!val) return;
+    try { localStorage.setItem(API_KEY_STORAGE_KEY, val); } catch (e) {}
+    refreshApiKeyStatus();
+    apiKeyPanel.hidden = true;
+  });
+  document.getElementById('api-key-clear-btn').addEventListener('click', function(){
+    try { localStorage.removeItem(API_KEY_STORAGE_KEY); } catch (e) {}
+    document.getElementById('api-key-input').value = '';
+    refreshApiKeyStatus();
+  });
+
+  // Builds the actual prompt from everything already extracted/parsed on
+  // this page — real topic details, real Q&A pairs, real checklist text,
+  // real archive excerpts — not a hardcoded template with blanks filled
+  // in. If nothing was extracted, this still produces a reasonable if
+  // sparse prompt rather than failing.
+  async function buildGenerationPrompt(){
+    var parts = ['You are drafting the Technical Approach section of a DoD SBIR/STTR proposal in response to the RFI/topic below. Be specific and technical, not generic marketing language.'];
+    parts.push('TOPIC: ' + document.getElementById('topic-code-el').textContent + ' — ' + document.getElementById('topic-title-el').textContent);
+
+    var objective = document.getElementById('extract-objective').textContent.trim();
+    if (objective) parts.push('OBJECTIVE:\n' + objective);
+    var description = document.getElementById('extract-description').textContent.trim();
+    if (description) parts.push('DESCRIPTION:\n' + description);
+    var phase1 = document.getElementById('extract-phase1').textContent.trim();
+    if (phase1) parts.push('PHASE I:\n' + phase1);
+    var phase2 = document.getElementById('extract-phase2').textContent.trim();
+    if (phase2) parts.push('PHASE II:\n' + phase2);
+
+    var instructions = document.getElementById('checklist-instructions').value.trim();
+    if (instructions) parts.push('SOLICITATION INSTRUCTIONS — follow any page limits, figure requirements, or formatting rules stated here:\n' + instructions);
+    var rules = document.getElementById('checklist-rules').value.trim();
+    if (rules) parts.push('RULES / COMPONENT LIST:\n' + rules);
+
+    var qaPairs = parseQAPairs(document.getElementById('checklist-qa').value);
+    if (qaPairs.length) {
+      parts.push('Q&A FROM THE GOVERNMENT — your draft must directly address every one of these, not just the topic in general:\n' +
+        qaPairs.map(function(p){ return 'Q: ' + p.question + '\nA: ' + p.answer; }).join('\n\n'));
+    }
+
+    // Real excerpts from real files in the private archive — "similar
+    // past submissions" the way the archive is actually populated, not
+    // fabricated. Capped at 3 files so the prompt doesn't balloon.
+    try {
+      var folders = [];
+      var names = (await walkArchiveDir('', 0, folders)).sort();
+      var pdfNames = names.filter(function(n){ return /\.pdf$/i.test(n); }).slice(0, 3);
+      var excerptBlocks = [];
+      for (var i = 0; i < pdfNames.length; i++) {
+        var href = 'private-rfi-archive/' + pdfNames[i].split('/').map(encodeURIComponent).join('/');
+        var excerpt = await extractArchiveExcerpt(href);
+        if (excerpt) excerptBlocks.push(pdfNames[i] + ':\n' + excerpt);
+      }
+      if (excerptBlocks.length) {
+        parts.push('EXCERPTS FROM SIMILAR PAST SUBMISSIONS IN THE ARCHIVE (for tone/approach reference):\n' + excerptBlocks.join('\n\n'));
+      }
+    } catch (e) { /* archive not reachable — generate from what we have */ }
+
+    parts.push('Write the Technical Approach section now.');
+    return parts.join('\n\n');
+  }
+
+  // Hybrid: try this server's own key first (free for anyone using this
+  // running instance — set ANTHROPIC_API_KEY once when starting
+  // serve_no_cache.py). Falls back to the visitor's own key stored in
+  // their browser, which also works on the deployed Pages site where
+  // there's no server at all to hold a key.
+  async function callAnthropic(prompt){
+    var res = null;
+    try {
+      res = await fetch('/archive-generate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({prompt: prompt})
+      });
+      if (res.status === 501) res = null; // server reachable, no key configured there
+    } catch (e) {
+      res = null; // no local server at all (e.g. the deployed Pages site)
+    }
+
+    var usedOwnKey = false;
+    if (!res) {
+      var apiKey = getStoredApiKey();
+      if (!apiKey) return {ok: false, reason: 'no-key'};
+      usedOwnKey = true;
+      try {
+        res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true',
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({model: ANTHROPIC_MODEL, max_tokens: 1536, messages: [{role: 'user', content: prompt}]})
+        });
+      } catch (e) {
+        return {ok: false, reason: 'network-error', detail: String(e)};
+      }
+    }
+
+    if (!res.ok) {
+      var errBody = await res.text();
+      var detail = errBody;
+      try { detail = (JSON.parse(errBody).error || {}).message || errBody; } catch (e) {}
+      return {ok: false, reason: 'api-error', status: res.status, detail: detail};
+    }
+    var data = await res.json();
+    var text = (data.content && data.content[0] && data.content[0].text) || '';
+    return {ok: true, text: text, usedOwnKey: usedOwnKey};
+  }
+
+  async function generateRealDraft(){
+    var statusEl = document.getElementById('generation-status');
+    var fableEl = document.getElementById('draft-fable');
+    var geminiEl = document.getElementById('draft-gemini');
+
+    statusEl.hidden = false;
+    statusEl.textContent = 'Generating from the real topic, Q&A, and archive content on this page…';
+    fableEl.textContent = '';
+    geminiEl.textContent = '';
+
+    var prompt = await buildGenerationPrompt();
+    var result = await callAnthropic(prompt);
+
+    if (result.ok) {
+      fableEl.textContent = result.text;
+      geminiEl.textContent = result.text; // one real call — see note below
+      statusEl.hidden = false;
+      statusEl.textContent = result.usedOwnKey
+        ? '✓ Real draft generated using your saved API key. (Fable/Gemini tabs show the same real output — there is only one real model call here, not two.)'
+        : '✓ Real draft generated via this server\u2019s configured key. (Fable/Gemini tabs show the same real output — there is only one real model call here, not two.)';
+    } else {
+      fableEl.innerHTML = MOCK_FABLE_HTML;
+      geminiEl.innerHTML = MOCK_GEMINI_HTML;
+      statusEl.hidden = false;
+      if (result.reason === 'no-key') {
+        statusEl.textContent = 'Showing placeholder mockup text — add your Anthropic API key above (or set ANTHROPIC_API_KEY on the server) for a real draft.';
+      } else {
+        statusEl.textContent = 'Showing placeholder mockup text — generation failed (' + (result.detail || result.reason) + ').';
+      }
+    }
+  }
+
   // generate draft — checklist is informational only, never required to click this
   document.getElementById('generate-draft-btn').addEventListener('click', function(){
     var panel = document.getElementById('draft-panel');
     panel.hidden = false;
     panel.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+    generateRealDraft();
   });
+  document.getElementById('regen-btn').addEventListener('click', generateRealDraft);
 
   // export menu
   var exportBtn = document.getElementById('export-btn');

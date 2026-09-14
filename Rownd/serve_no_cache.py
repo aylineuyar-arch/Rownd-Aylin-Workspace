@@ -39,10 +39,13 @@ restarting the server always requires logging in again.
 """
 import hashlib
 import hmac
+import json
 import os
 import secrets
 import socket
 import sys
+import urllib.error
+import urllib.request
 from getpass import getpass
 from urllib.parse import unquote
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -52,7 +55,19 @@ ARCHIVE_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__fi
 LOGIN_PATH = '/archive-login'
 MKDIR_PATH = '/archive-mkdir'
 UPLOAD_PATH = '/archive-upload'
+GENERATE_PATH = '/archive-generate'
 SESSION_COOKIE_NAME = 'archive_session'
+
+# Hybrid generation, "free tier" half: set this once when starting the
+# server (`ANTHROPIC_API_KEY=sk-... python3 serve_no_cache.py`) and
+# anyone using THIS running instance gets real draft generation with no
+# setup of their own — you're the one whose account is billed. Leave it
+# unset and /archive-generate just tells the page so, which falls back to
+# a visitor's own key entered in the browser (the only option at all on
+# the deployed Pages site, since there's no server there to hold a key).
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '').strip()
+ANTHROPIC_MODEL = os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-5').strip()
+MAX_GENERATE_BODY = 200 * 1024
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 
 
@@ -234,7 +249,62 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
             return self._handle_mkdir()
         if self.path == UPLOAD_PATH:
             return self._handle_upload()
+        if self.path == GENERATE_PATH:
+            return self._handle_generate()
         self.send_error(501, 'Unsupported method (POST)')
+
+    def _handle_generate(self):
+        # No login required: this doesn't read archive file content on
+        # its own (the page includes any archive excerpts it already
+        # fetched, itself auth-gated separately) — it's just a proxy to
+        # Anthropic using a key that lives only in this process's
+        # environment, never in a file this repo tracks.
+        if not ANTHROPIC_API_KEY:
+            return self._respond(501, 'No ANTHROPIC_API_KEY set for this server. Add your own key in the browser instead.')
+        body = self._read_bounded_bytes(MAX_GENERATE_BODY)
+        if body is None:
+            return
+        try:
+            payload = json.loads(body.decode('utf-8'))
+            prompt = payload.get('prompt', '')
+        except (ValueError, UnicodeDecodeError):
+            return self._respond(400, 'Invalid JSON body.')
+        if not isinstance(prompt, str) or not prompt.strip():
+            return self._respond(400, 'Missing "prompt".')
+
+        upstream_body = json.dumps({
+            'model': ANTHROPIC_MODEL,
+            'max_tokens': 1536,
+            'messages': [{'role': 'user', 'content': prompt}],
+        }).encode('utf-8')
+        req = urllib.request.Request(
+            'https://api.anthropic.com/v1/messages',
+            data=upstream_body,
+            method='POST',
+            headers={
+                'x-api-key': ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json',
+            },
+        )
+        try:
+            # Real generation can take a while; this is a separate outbound
+            # connection to Anthropic, not the client socket, so it doesn't
+            # interact with this handler's own `timeout` (that one bounds
+            # reads/writes on the browser's connection, not this one).
+            with urllib.request.urlopen(req, timeout=90) as resp:
+                resp_body = resp.read()
+                status = resp.status
+        except urllib.error.HTTPError as e:
+            resp_body = e.read()
+            status = e.code
+        except Exception as e:
+            return self._respond(502, 'Could not reach Anthropic API: {}'.format(e))
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(resp_body)))
+        self.end_headers()
+        self.wfile.write(resp_body)
 
     def _handle_login(self):
         # A password is never going to be anywhere near 4096 bytes; this
