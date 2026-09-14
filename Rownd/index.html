@@ -887,27 +887,53 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   }
 
-  // PDF.js tells us where each line actually ends (item.hasEOL) — joining
-  // every text fragment with a single space instead of using that threw
-  // away all of the source PDF's real line structure, turning any
-  // extracted text into one unbroken block regardless of how it was
-  // actually laid out on the page. This rebuilds real line breaks from
-  // that signal, and treats 2+ blank lines in a row as one paragraph
-  // break instead of a wall of vertical whitespace.
+  // item.hasEOL just marks "a line ended here" — it fires identically for
+  // an ordinary word-wrap at the page's margin AND a genuine paragraph
+  // break, so turning every hasEOL into a literal newline (an earlier,
+  // wrong attempt at this) just replicated the PDF's arbitrary column
+  // width as mid-sentence line breaks — still unreadable, just
+  // differently unreadable. The real signal for "is this actually a new
+  // paragraph" is vertical spacing: a gap noticeably bigger than the
+  // page's normal line-to-line spacing means a blank line was there in
+  // the source; a normal-sized gap means the line simply wrapped and
+  // belongs reflowed into the same paragraph as running prose.
   function itemsToText(items){
     var lines = [];
     var current = '';
+    var currentY = null;
     items.forEach(function(it){
+      if (currentY === null && it.transform) currentY = it.transform[5];
       current += it.str;
       if (it.hasEOL) {
-        lines.push(current);
+        lines.push({text: current, y: currentY});
         current = '';
+        currentY = null;
       } else if (it.str && !/\s$/.test(current)) {
         current += ' ';
       }
     });
-    if (current) lines.push(current);
-    return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    if (current.trim()) lines.push({text: current, y: currentY});
+
+    var gaps = [];
+    for (var i = 1; i < lines.length; i++) {
+      if (lines[i].y != null && lines[i - 1].y != null) gaps.push(Math.abs(lines[i - 1].y - lines[i].y));
+    }
+    gaps.sort(function(a, b){ return a - b; });
+    var typicalGap = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 0;
+
+    var out = '';
+    for (var j = 0; j < lines.length; j++) {
+      var line = lines[j].text.trim();
+      if (!line) continue;
+      if (!out) { out = line; continue; }
+      var gap = (lines[j].y != null && lines[j - 1].y != null) ? Math.abs(lines[j - 1].y - lines[j].y) : typicalGap;
+      if (typicalGap && gap > typicalGap * 1.4) {
+        out += '\n\n' + line; // a real blank line in the source — genuine paragraph break
+      } else {
+        out += ' ' + line; // an ordinary wrap — reflow into the running paragraph
+      }
+    }
+    return out.trim();
   }
 
   async function extractPdfText(file){

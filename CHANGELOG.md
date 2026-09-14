@@ -4,6 +4,10 @@ Every push to this repo is logged here, newest first, in plain language — what
 
 ## 2026-09-13
 
+- **The line-break fix from earlier today was wrong — replaced it with one that actually reflows text.** `item.hasEOL` fires identically for an ordinary word-wrap at the page margin and a genuine paragraph break, so turning every one into a literal newline (the earlier fix) just replicated the PDF's arbitrary column width as mid-sentence line breaks — confirmed by the user's screenshot showing the exact same unreadable wall of text, just wrapped differently. Rewrote `itemsToText` to use each line's actual vertical position: a gap noticeably larger than the page's typical line-to-line spacing means a real blank line was in the source (kept as a paragraph break); a normal-sized gap means the line simply wrapped at the margin (reflowed into the running paragraph with a single space, like real prose). Verified with a PDF built specifically to distinguish the two cases: 3 word-wrapped lines of one paragraph correctly reflowed into a single natural sentence, a genuine blank line before a second paragraph was correctly preserved as a real paragraph break, and the structured OBJECTIVE/DESCRIPTION/PHASE section parser still correctly detected and extracted each section afterward.
+
+
+
 - **Removed the redundant model badge next to "Technical Approach" when it duplicates the draft tabs.** In "Both" mode, the highlighted tab (e.g. "Fable draft") already says which model you're looking at, so the "Claude Fable" badge next to the heading was saying the same thing a second time. The badge now only shows in single-model mode (Fable-only or Gemini-only), where the tabs are hidden entirely and it's the sole indicator of which model generated the draft — genuinely needed there, not redundant. Verified all three transitions: hidden by default (Both mode), visible when switching to a single model, hidden again when switching back to Both.
 
 
