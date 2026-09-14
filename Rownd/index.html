@@ -50,14 +50,14 @@
         data-active="bg-[#2E615F] text-white border-[#2E615F]"
         data-inactive="bg-[#2E615F]/10 text-[#2E615F] border-transparent hover:bg-[#2E615F]/20"
         class="bg-[#2E615F]/10 text-[#2E615F] border-transparent border-2 rounded-full px-6 py-3 font-semibold text-xl transition-colors">New RFIs</button>
-      <button type="button" data-section="historic"
-        data-active="bg-[#3F6647] text-white border-[#3F6647]"
-        data-inactive="bg-[#3F6647]/10 text-[#3F6647] border-transparent hover:bg-[#3F6647]/20"
-        class="bg-[#3F6647]/10 text-[#3F6647] border-transparent border-2 rounded-full px-6 py-3 font-semibold text-xl transition-colors">Historic Submissions</button>
       <button type="button" data-section="reference"
         data-active="bg-[#7A5C3E] text-white border-[#7A5C3E]"
         data-inactive="bg-[#7A5C3E]/10 text-[#7A5C3E] border-transparent hover:bg-[#7A5C3E]/20"
         class="bg-[#7A5C3E]/10 text-[#7A5C3E] border-transparent border-2 rounded-full px-6 py-3 font-semibold text-xl transition-colors">Reference Documents</button>
+      <button type="button" data-section="historic"
+        data-active="bg-[#3F6647] text-white border-[#3F6647]"
+        data-inactive="bg-[#3F6647]/10 text-[#3F6647] border-transparent hover:bg-[#3F6647]/20"
+        class="bg-[#3F6647]/10 text-[#3F6647] border-transparent border-2 rounded-full px-6 py-3 font-semibold text-xl transition-colors">Historic Submissions</button>
       <button type="button" data-section="architecture"
         data-active="bg-[#6B3F73] text-white border-[#6B3F73]"
         data-inactive="bg-[#6B3F73]/10 text-[#6B3F73] border-transparent hover:bg-[#6B3F73]/20"
@@ -394,33 +394,12 @@
       <h1 class="font-display font-semibold text-5xl text-[#3E5C7A] mb-4">Drafts in Progress</h1>
       <p class="text-lg text-slate-600 mb-3.5">Pick up where you left off — resume any of these to reload its topic into New Draft.</p>
 
-      <div class="bg-white border-2 border-slate-300 rounded-xl p-4">
-        <div id="drafts-in-progress-list" class="flex flex-col">
-          <div class="draft-progress-row flex items-center gap-3.5 py-3 border-b-2 border-slate-300">
-            <div class="flex-1 min-w-0">
-              <div class="font-semibold text-xl text-slate-900">Aegis Dynamics — F-35 Agnostic Rapid Weapons Integration</div>
-              <div class="text-lg text-slate-600 mt-0.5">Saved 2 hours ago</div>
-            </div>
-            <span class="font-mono text-sm font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">2 / 4</span>
-            <button type="button" class="resume-draft-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors" data-topic="F-35 Agnostic Rapid Weapons Integration" data-code="DAF26BZ05-DV032">Resume</button>
-          </div>
-          <div class="draft-progress-row flex items-center gap-3.5 py-3 border-b-2 border-slate-300">
-            <div class="flex-1 min-w-0">
-              <div class="font-semibold text-xl text-slate-900">Nova Defense — Dynamic Open Systems Enclave</div>
-              <div class="text-lg text-slate-600 mt-0.5">Saved yesterday</div>
-            </div>
-            <span class="font-mono text-sm font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">1 / 4</span>
-            <button type="button" class="resume-draft-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors" data-topic="Dynamic Open Systems Enclave" data-code="DAF26BZ05-DV033">Resume</button>
-          </div>
-          <div class="draft-progress-row flex items-center gap-3.5 py-3">
-            <div class="flex-1 min-w-0">
-              <div class="font-semibold text-xl text-slate-900">Meridian Systems — Ultra-Sensitive Quantum Telemetry Receiver</div>
-              <div class="text-lg text-slate-600 mt-0.5">Saved 3 days ago</div>
-            </div>
-            <span class="font-mono text-sm font-bold px-2.5 py-1 rounded-full bg-[#3E5C7A] text-white">4 / 4</span>
-            <button type="button" class="resume-draft-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors" data-topic="Ultra-Sensitive Quantum Telemetry Receiver" data-code="DAF26BZ05-NV028">Resume</button>
-          </div>
-        </div>
+      <div id="drafts-in-progress-empty" class="bg-white border-2 border-dashed border-slate-400 rounded-xl p-5 text-center">
+        <p class="text-lg text-slate-600 font-medium">No drafts saved yet — use "Save Draft" on the New Draft page to add one here.</p>
+      </div>
+
+      <div class="bg-white border-2 border-slate-300 rounded-xl p-4" id="drafts-in-progress-wrap" hidden>
+        <div id="drafts-in-progress-list" class="flex flex-col"></div>
       </div>
     </section>
 
@@ -785,8 +764,10 @@
     });
   });
 
-  // topic result selection + "use for new draft"
-  document.querySelectorAll('.topic-result').forEach(function(item){
+  // topic result selection + "use for new draft" — factored out so a
+  // manually-entered topic added later (see addOrSkipFeedTopic below)
+  // gets the exact same click behavior as one already in the feed.
+  function wireTopicResult(item){
     item.addEventListener('click', function(e){
       document.querySelectorAll('.topic-result').forEach(function(i){
         i.classList.remove('border-[#2E615F]', 'bg-[#2E615F]/[0.1]');
@@ -801,7 +782,30 @@
         document.getElementById('draft-panel').hidden = true; showSection('new-draft');
       }
     });
-  });
+  }
+  document.querySelectorAll('.topic-result').forEach(wireTopicResult);
+
+  // Adds a manually-entered topic into the feed list so it's not lost
+  // the moment you navigate away — skips creating a row if one with the
+  // same topic code is already there (matching against the mock feed
+  // entries and any previously auto-saved ones alike, since they're all
+  // in the same list).
+  function addOrSkipFeedTopic(topic, code){
+    var already = Array.from(document.querySelectorAll('.topic-result')).some(function(i){ return i.dataset.code === code; });
+    if (already) return;
+    var item = document.createElement('div');
+    item.className = 'topic-result flex justify-between items-center gap-3 px-3 py-2.5 border-2 border-slate-300 bg-white rounded-lg cursor-pointer hover:border-[#2E615F]/60 transition-colors';
+    item.dataset.topic = topic;
+    item.dataset.code = code;
+    item.innerHTML =
+      '<div><span class="font-semibold text-xl text-slate-900"></span><br><span class="font-mono text-sm text-slate-600"></span></div>' +
+      '<button type="button" class="use-topic-btn bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3 py-1.5 rounded-lg transition-colors">Use for new draft</button>';
+    item.querySelector('.font-semibold').textContent = topic;
+    item.querySelector('.font-mono').textContent = code;
+    wireTopicResult(item);
+    var feed = document.getElementById('source-feed');
+    feed.insertBefore(item, feed.firstChild);
+  }
 
   // manual topic entry: enable "Use for new draft" once both fields are filled
   var manualTitle = document.getElementById('manual-topic-title');
@@ -814,8 +818,11 @@
   manualCode.addEventListener('input', updateManualBtn);
   manualUseBtn.addEventListener('click', function(){
     topicManuallySet = true;
-    document.getElementById('topic-title-el').textContent = manualTitle.value.trim();
-    document.getElementById('topic-code-el').textContent = manualCode.value.trim();
+    var title = manualTitle.value.trim();
+    var code = manualCode.value.trim();
+    addOrSkipFeedTopic(title, code);
+    document.getElementById('topic-title-el').textContent = title;
+    document.getElementById('topic-code-el').textContent = code;
     document.getElementById('draft-panel').hidden = true; showSection('new-draft');
   });
 
@@ -1446,19 +1453,13 @@
     runQAGuidance(val);
   });
 
-  // resume a saved draft: reload its topic into New Draft
-  document.querySelectorAll('.resume-draft-btn').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      topicManuallySet = true;
-      document.getElementById('topic-title-el').textContent = btn.dataset.topic;
-      document.getElementById('topic-code-el').textContent = btn.dataset.code + ' · 26.BZ · USAF/AFMC';
-      document.getElementById('draft-panel').hidden = true;
-      showSection('new-draft');
-    });
-  });
-
   // save draft: snapshot current topic + proposal name + checklist progress
-  // into a new row at the top of Drafts in Progress
+  // + the actual generated draft content (not just a pointer back to the
+  // topic) into a new row at the top of Drafts in Progress. The draft
+  // HTML is kept as a plain JS property on the button (not a data-*
+  // attribute) — it can be arbitrarily large generated text, and going
+  // through an HTML attribute would mean escaping/unescaping it for no
+  // benefit since nothing outside this page ever needs to read it.
   document.getElementById('save-draft-btn').addEventListener('click', function(){
     var proposalName = document.getElementById('proposal-name').value.trim() || 'Untitled Proposal';
     var topic = document.getElementById('topic-title-el').textContent;
@@ -1466,6 +1467,7 @@
     var progress = document.getElementById('checklist-progress').textContent;
     var progressParts = progress.split(' / ');
     var progressDone = progressParts[0] === progressParts[1];
+    var draftPanelHidden = document.getElementById('draft-panel').hidden;
 
     var row = document.createElement('div');
     row.className = 'draft-progress-row flex items-center gap-3.5 py-3 border-b-2 border-slate-300';
@@ -1483,16 +1485,26 @@
     var resumeBtn = row.querySelector('.resume-draft-btn');
     resumeBtn.dataset.topic = topic;
     resumeBtn.dataset.code = code;
+    resumeBtn.dataset.proposalName = proposalName === 'Untitled Proposal' ? '' : proposalName;
+    resumeBtn._draftPanelHidden = draftPanelHidden;
+    resumeBtn._draftFableHtml = document.getElementById('draft-fable').innerHTML;
+    resumeBtn._draftGeminiHtml = document.getElementById('draft-gemini').innerHTML;
     resumeBtn.addEventListener('click', function(){
       topicManuallySet = true;
       document.getElementById('topic-title-el').textContent = resumeBtn.dataset.topic;
       document.getElementById('topic-code-el').textContent = resumeBtn.dataset.code + ' · 26.BZ · USAF/AFMC';
-      document.getElementById('draft-panel').hidden = true;
+      document.getElementById('proposal-name').value = resumeBtn.dataset.proposalName;
+      document.getElementById('draft-fable').innerHTML = resumeBtn._draftFableHtml;
+      document.getElementById('draft-gemini').innerHTML = resumeBtn._draftGeminiHtml;
+      document.getElementById('draft-panel').hidden = resumeBtn._draftPanelHidden;
+      if (!resumeBtn._draftPanelHidden) setChecklistCollapsed(true);
       showSection('new-draft');
     });
 
     var list = document.getElementById('drafts-in-progress-list');
     list.insertBefore(row, list.firstChild);
+    document.getElementById('drafts-in-progress-empty').hidden = true;
+    document.getElementById('drafts-in-progress-wrap').hidden = false;
 
     var confirm = document.getElementById('save-draft-confirm');
     confirm.hidden = false;

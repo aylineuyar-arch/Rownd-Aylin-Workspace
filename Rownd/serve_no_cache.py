@@ -44,6 +44,7 @@ import os
 import secrets
 import socket
 import sys
+import time
 import urllib.error
 import urllib.request
 from getpass import getpass
@@ -52,6 +53,12 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 HASH_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.archive_auth_hash')
 ARCHIVE_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'private-rfi-archive'))
+# Enforced here, at every server start, rather than left to whatever the
+# directory happened to be created with (umask-dependent, and easy to
+# lose track of) — this is what actually backs the privacy policy's
+# "chmod 700" claim, instead of that being true by accident.
+if os.path.isdir(ARCHIVE_DIR):
+    os.chmod(ARCHIVE_DIR, 0o700)
 LOGIN_PATH = '/archive-login'
 MKDIR_PATH = '/archive-mkdir'
 UPLOAD_PATH = '/archive-upload'
@@ -119,6 +126,15 @@ PASSWORD_HASH = load_or_set_password_hash()
 # Fresh every run, never persisted — restarting the server always requires
 # logging in again, which keeps a stale cookie from outliving the process.
 SESSION_SECRET = secrets.token_hex(32)
+
+# Login attempt lockout — this server is single-threaded (see `timeout`
+# on the handler below), so a plain module-level dict is safe with no
+# locking needed. Resets on server restart, same as the session secret;
+# that's fine, this is a secondary line of defense against brute-forcing
+# the password over the loopback interface, not the only one.
+LOGIN_MAX_ATTEMPTS = 5
+LOGIN_LOCKOUT_SECONDS = 60
+_login_state = {'failures': 0, 'locked_until': 0.0}
 
 
 def parse_cookies(header_value):
@@ -311,6 +327,11 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
         self.wfile.write(resp_body)
 
     def _handle_login(self):
+        now = time.time()
+        if now < _login_state['locked_until']:
+            wait = int(_login_state['locked_until'] - now) + 1
+            return self._respond(429, 'Too many wrong attempts. Try again in {}s.'.format(wait))
+
         # A password is never going to be anywhere near 4096 bytes; this
         # is about rejecting a malformed/huge claimed length, not real
         # passwords.
@@ -318,6 +339,7 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
         if supplied_pw is None:
             return
         if hmac.compare_digest(sha256_hex(supplied_pw), PASSWORD_HASH):
+            _login_state['failures'] = 0
             self.send_response(200)
             # Session-only cookie (no Max-Age/Expires): cleared when the
             # browser closes. HttpOnly so page JS can't read the token
@@ -330,6 +352,10 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
         else:
+            _login_state['failures'] += 1
+            if _login_state['failures'] >= LOGIN_MAX_ATTEMPTS:
+                _login_state['locked_until'] = now + LOGIN_LOCKOUT_SECONDS
+                _login_state['failures'] = 0
             self._respond(403, 'Wrong password.')
 
     def _handle_mkdir(self):
@@ -346,6 +372,7 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
         target = os.path.join(ARCHIVE_DIR, name)
         try:
             os.makedirs(target, exist_ok=False)
+            os.chmod(target, 0o700)  # not just relying on umask
         except FileExistsError:
             self._respond(409, 'A folder with that name already exists.')
         except (OSError, ValueError):
