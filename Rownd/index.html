@@ -110,28 +110,28 @@
               </div>
               <ul class="file-list flex flex-col gap-1.5 mt-0" id="filelist-checklist-rfi"></ul>
             </div>
-            <textarea id="checklist-rfi-details" class="checklist-input w-full min-h-[70px] resize-none overflow-hidden bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="…or paste the full RFI / topic details here"></textarea>
+            <textarea id="checklist-rfi-details" class="checklist-input w-full min-h-[70px] resize-none overflow-hidden bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl leading-relaxed placeholder:text-slate-400" placeholder="…or paste the full RFI / topic details here"></textarea>
           </div>
           <div class="checklist-item">
             <div class="flex items-center gap-2 mb-1.5">
               <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-lg font-bold transition-colors">✓</span>
               <label class="font-semibold text-xl text-slate-900" for="checklist-instructions">Solicitation instructions</label>
             </div>
-            <textarea id="checklist-instructions" class="checklist-input w-full min-h-[70px] resize-none overflow-hidden bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="Paste the solicitation instructions here…"></textarea>
+            <textarea id="checklist-instructions" class="checklist-input w-full min-h-[70px] resize-none overflow-hidden bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl leading-relaxed placeholder:text-slate-400" placeholder="Paste the solicitation instructions here…"></textarea>
           </div>
           <div class="checklist-item">
             <div class="flex items-center gap-2 mb-1.5">
               <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-lg font-bold transition-colors">✓</span>
               <label class="font-semibold text-xl text-slate-900" for="checklist-rules">Rules and component list</label>
             </div>
-            <textarea id="checklist-rules" class="checklist-input w-full min-h-[70px] resize-none overflow-hidden bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="Paste the rules and component list here…"></textarea>
+            <textarea id="checklist-rules" class="checklist-input w-full min-h-[70px] resize-none overflow-hidden bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl leading-relaxed placeholder:text-slate-400" placeholder="Paste the rules and component list here…"></textarea>
           </div>
           <div class="checklist-item">
             <div class="flex items-center gap-2 mb-1.5">
               <span class="checklist-check flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-400 flex items-center justify-center text-transparent text-lg font-bold transition-colors">✓</span>
               <label class="font-semibold text-xl text-slate-900" for="checklist-qa">Q&amp;A answers</label>
             </div>
-            <textarea id="checklist-qa" class="checklist-input w-full min-h-[70px] resize-none overflow-hidden bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl placeholder:text-slate-400" placeholder="Paste the Q&amp;A answers here…"></textarea>
+            <textarea id="checklist-qa" class="checklist-input w-full min-h-[70px] resize-none overflow-hidden bg-slate-50 border-2 border-slate-300 rounded-lg pl-8 pr-3 py-2.5 text-slate-900 text-xl leading-relaxed placeholder:text-slate-400" placeholder="Paste the Q&amp;A answers here…"></textarea>
           </div>
         </div>
       </div>
@@ -512,8 +512,6 @@
           <span class="font-display font-semibold text-2xl text-slate-900">Private RFI/RFP Archive</span>
           <span class="font-mono text-sm font-bold px-2.5 py-1 rounded-full bg-[#A34A34] text-white">LOCAL ONLY — never in this repo</span>
         </div>
-        <p class="text-lg text-slate-700 mb-2">Previously-sent RFI/RFPs, dropped on disk into <code class="font-mono text-base bg-white border border-slate-300 rounded px-1.5 py-0.5">Rownd/private-rfi-archive/</code> — the basis for future generated proposals.</p>
-
         <button type="button" id="archive-privacy-toggle" aria-expanded="false" aria-controls="archive-privacy-policy" class="extract-collapse-toggle flex items-center gap-1.5 mb-3 text-[#A34A34] font-semibold text-lg">
           <span class="chevron inline-block transition-transform">▾</span> View privacy policy
         </button>
@@ -1859,7 +1857,14 @@
     if (res.ok) {
       errEl.hidden = true;
       loadPrivateArchive();
-      showTimedSuccess(document.getElementById('archive-upload-success'));
+      // Confirms the specific file just uploaded — this is knowledge
+      // from the upload we just did, not a disclosure of other archive
+      // contents, so it's fine to show without being logged in. Without
+      // this, uploading while logged out looked like nothing happened,
+      // since seeing the file appear in the tree itself needs login.
+      var successEl = document.getElementById('archive-upload-success');
+      successEl.textContent = '✓ Uploaded "' + file.name + '"' + (folderName ? ' to ' + folderName + '/' : '');
+      showTimedSuccess(successEl);
     } else {
       errEl.textContent = await res.text();
       errEl.hidden = false;

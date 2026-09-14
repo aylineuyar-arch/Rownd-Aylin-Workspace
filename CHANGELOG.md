@@ -4,6 +4,13 @@ Every push to this repo is logged here, newest first, in plain language — what
 
 ## 2026-09-13
 
+- **Simplified the auth rule: any folder listing is public at any depth; only opening a file's content requires login.** The previous rule only exempted the exact top-level directory — a nested folder's own listing (e.g. `test/`) still needed a login, so the "file tree" wasn't actually fully visible without one. `_needs_auth()` now checks `os.path.isdir()` on the resolved target: a directory is never gated, a file always is, regardless of depth. Verified with curl: top-level listing, a nested folder's listing, and a file inside that folder — 200, 200, 403, all logged out; confirmed live in the browser too, with the full real file tree (including files already in the archive) showing up with zero login, while opening any of those files still correctly returns 403.
+- **Upload confirmation now names the file, and shows even when logged out** — uploading while logged out looked like nothing happened, because seeing the file appear in the tree used to also require login (before the fix above) and the generic "File uploaded successfully" message gave no specifics either way. The success message now reads `Uploaded "name.pdf" to folder/` — that's just confirming the action you took, not disclosing other archive contents, so it's fine without a login.
+- **Removed the unnecessary description line** ("Previously-sent RFI/RFPs, dropped on disk into `Rownd/private-rfi-archive/`...") from the archive panel — redundant with the section heading and privacy policy right below it.
+- **Checklist textareas get real line spacing** — the one-sentence-per-line fix from earlier today was functionally correct but visually cramped (browser's default, tight `line-height`). Added `leading-relaxed`, confirmed via computed style: line-height went from a cramped default to 32.5px for the 20px text — a real, moderate increase, not an oversized gap.
+
+
+
 - **One sentence per line for extracted PDF text — correct reflow alone wasn't actually readable.** Natural prose reflow (previous fix) was technically correct, but a genuinely dense multi-sentence requirement paragraph is still a wall of text to scan by eye — confirmed by a real screenshot of "Rules and component list" still reading as one 10-sentence block. A plain `<textarea>` can't draw an actual divider, so `oneSentencePerLine()` inserts a real line break after each sentence-ending punctuation mark instead, making dense text read like a checklist. Verified: a paragraph reflowed from 4 word-wrapped PDF lines now shows as 3 clean, separate one-sentence lines instead of one run-on paragraph, with genuine paragraph breaks (blank lines in the source) still preserved separately.
 
 

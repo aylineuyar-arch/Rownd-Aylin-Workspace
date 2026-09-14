@@ -137,18 +137,21 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
         # the archive — comparing against the raw request string instead
         # previously let a case-varied path and a URL-encoded slash both
         # slip past auth while still serving the real file. Lowercased
-        # because os.path.normcase is a no-op on POSIX, even though the
-        # actual filesystem here resolves case-insensitively.
+        # for the containment check because os.path.normcase is a no-op
+        # on POSIX, even though the actual filesystem here resolves
+        # case-insensitively.
         try:
-            target = os.path.realpath(self.translate_path(self.path)).lower()
-            archive = ARCHIVE_DIR.lower()
-            if target == archive:
-                # The top-level directory listing itself — names only,
-                # no content — is intentionally public. Everything past
-                # it (any file, any subfolder's own listing) still needs
-                # a login; only the outermost names are exempt.
-                return False
-            return os.path.commonpath([target, archive]) == archive
+            target = os.path.realpath(self.translate_path(self.path))
+            archive = ARCHIVE_DIR
+            if os.path.commonpath([target.lower(), archive.lower()]) != archive.lower():
+                return False  # not under the archive at all
+            # The file tree itself (names, at any depth) is public — only
+            # opening an actual file's content requires login. A folder
+            # listing has no content of its own to protect; os.path.isdir
+            # is checked on the real (not lowercased) resolved path so
+            # this stays correct if this ever runs on a case-sensitive
+            # filesystem too.
+            return not os.path.isdir(target)
         except Exception:
             # Fail closed: if this request's path can't be cleanly
             # resolved for some unexpected reason, require auth rather
