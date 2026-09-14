@@ -1534,7 +1534,12 @@
         ta.dispatchEvent(new Event('input', {bubbles: true}));
       });
 
-      if (!draft.draftPanelHidden) setChecklistCollapsed(true);
+      // Deliberately left expanded on resume, even when a generated
+      // draft is also being restored — collapsing on a fresh Generate
+      // Draft click makes sense (you just clicked away from the
+      // checklist you were just looking at), but doing the same here
+      // hid the very checklist content Resume had just restored, behind
+      // a collapsed accordion with only its progress badge visible.
       showSection('new-draft');
     });
 
