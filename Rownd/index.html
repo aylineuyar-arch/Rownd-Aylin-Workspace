@@ -152,20 +152,7 @@
           <button type="button" data-model="gemini" aria-pressed="false" class="model-btn px-3 py-1.5 rounded-md text-slate-600 font-semibold text-lg transition-colors">Gemini</button>
           <button type="button" data-model="both" aria-pressed="true" class="model-btn px-3 py-1.5 rounded-md bg-slate-800 text-white font-semibold text-lg transition-colors">Both</button>
         </div>
-        <button type="button" id="api-key-toggle" class="text-base text-slate-500 hover:text-slate-700 underline decoration-2 underline-offset-2 font-medium">
-          <span id="api-key-status">Add your Anthropic API key for real generation</span>
-        </button>
         <button type="button" id="generate-draft-btn" class="bg-[#3D4A73] hover:bg-[#2E3A5F] text-white font-semibold text-lg px-4 py-2 rounded-lg transition-colors ml-auto">Generate Draft</button>
-      </div>
-
-      <div id="api-key-panel" hidden class="bg-slate-50 border-2 border-slate-300 rounded-lg p-3 mb-4">
-        <label class="block text-lg font-semibold text-slate-800 mb-1.5">Your Anthropic API key</label>
-        <div class="flex gap-2 items-center flex-wrap">
-          <input type="password" id="api-key-input" placeholder="sk-ant-…" class="bg-white border-2 border-slate-300 rounded-lg px-3 py-2 text-lg flex-1 min-w-[220px]">
-          <button type="button" id="api-key-save-btn" class="bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap">Save</button>
-          <button type="button" id="api-key-clear-btn" class="text-base text-[#A34A34] font-semibold underline decoration-2 underline-offset-2 whitespace-nowrap">Remove key</button>
-        </div>
-        <p class="text-sm text-slate-500 mt-2 leading-relaxed">Stored only in this browser (localStorage) — never sent anywhere but directly to Anthropic's API from your own browser, never to any server of this app's, never committed to the repo. Get a key at <span class="font-mono">console.anthropic.com</span>. Without one, Generate Draft shows placeholder mockup text instead of a real draft.</p>
       </div>
 
       </div>
@@ -333,13 +320,6 @@
           <button type="button" id="regen-btn" class="bg-white hover:border-slate-500 border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg transition-colors">Regenerate</button>
           <button type="button" id="improve-btn" disabled class="bg-white border-2 border-slate-400 text-slate-800 text-lg font-semibold px-3.5 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">Improve selection</button>
           <button type="button" disabled class="bg-white border-2 border-dashed border-slate-400 text-slate-500 text-lg font-semibold px-3.5 py-2 rounded-lg cursor-not-allowed">+ Comments <span class="font-normal text-slate-400">(tentative)</span></button>
-          <div class="relative ml-auto">
-            <button type="button" id="export-btn" class="bg-[#3D4A73] hover:bg-[#2E3A5F] text-white font-semibold text-lg px-3.5 py-2 rounded-lg transition-colors">Export as ▾</button>
-            <div id="export-menu" hidden class="absolute right-0 top-[calc(100%+6px)] bg-white border-2 border-slate-300 rounded-lg shadow-lg p-1.5 min-w-[170px] z-10">
-              <button type="button" class="block w-full text-left px-2.5 py-2 rounded-md hover:bg-slate-100 text-lg text-slate-800 font-medium">Word (.docx)</button>
-              <button type="button" class="block w-full text-left px-2.5 py-2 rounded-md hover:bg-slate-100 text-lg text-slate-800 font-medium">Google Doc</button>
-            </div>
-          </div>
         </div>
 
         <button type="button" id="referenced-toggle" aria-expanded="false" aria-controls="referenced-body" class="flex items-center gap-1.5 mt-4 text-slate-600 hover:text-slate-900 text-lg font-semibold">
@@ -385,7 +365,16 @@
 
       <div class="flex items-center justify-between gap-3 flex-wrap mt-6 pt-5 border-t-2 border-slate-300">
         <span id="save-draft-confirm" class="text-lg font-semibold text-[#3E5C7A]" hidden>✓ Saved to Drafts in Progress</span>
-        <button type="button" id="save-draft-btn" class="bg-white hover:border-[#3E5C7A] border-2 border-slate-400 text-slate-800 font-semibold text-xl px-5 py-2.5 rounded-lg transition-colors ml-auto">Save Draft</button>
+        <div class="flex items-center gap-3 ml-auto">
+          <button type="button" id="save-draft-btn" class="bg-[#3E5C7A] hover:bg-[#2E4A66] text-white font-bold text-2xl px-7 py-3.5 rounded-lg transition-colors">Save Draft</button>
+          <div class="relative">
+            <button type="button" id="export-btn" class="bg-[#3F6647] hover:bg-[#345838] text-white font-semibold text-lg px-3.5 py-2 rounded-lg transition-colors">Export as ▾</button>
+            <div id="export-menu" hidden class="absolute right-0 bottom-[calc(100%+6px)] bg-white border-2 border-slate-300 rounded-lg shadow-lg p-1.5 min-w-[170px] z-10">
+              <button type="button" class="block w-full text-left px-2.5 py-2 rounded-md hover:bg-slate-100 text-lg text-slate-800 font-medium">Word (.docx)</button>
+              <button type="button" class="block w-full text-left px-2.5 py-2 rounded-md hover:bg-slate-100 text-lg text-slate-800 font-medium">Google Doc</button>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1530,34 +1519,12 @@
   var MOCK_FABLE_HTML = document.getElementById('draft-fable').innerHTML;
   var MOCK_GEMINI_HTML = document.getElementById('draft-gemini').innerHTML;
 
+  // No UI to set this anymore (removed — this was a bring-your-own-key
+  // affordance on the New Draft page), but callAnthropic still checks
+  // for one as a fallback in case a key was saved in a prior session.
   function getStoredApiKey(){
     try { return localStorage.getItem(API_KEY_STORAGE_KEY) || ''; } catch (e) { return ''; }
   }
-  function refreshApiKeyStatus(){
-    document.getElementById('api-key-status').textContent = getStoredApiKey()
-      ? 'Your Anthropic API key is saved in this browser'
-      : 'Add your Anthropic API key for real generation';
-  }
-  refreshApiKeyStatus();
-
-  var apiKeyToggle = document.getElementById('api-key-toggle');
-  var apiKeyPanel = document.getElementById('api-key-panel');
-  apiKeyToggle.addEventListener('click', function(){
-    apiKeyPanel.hidden = !apiKeyPanel.hidden;
-    if (!apiKeyPanel.hidden) document.getElementById('api-key-input').value = getStoredApiKey();
-  });
-  document.getElementById('api-key-save-btn').addEventListener('click', function(){
-    var val = document.getElementById('api-key-input').value.trim();
-    if (!val) return;
-    try { localStorage.setItem(API_KEY_STORAGE_KEY, val); } catch (e) {}
-    refreshApiKeyStatus();
-    apiKeyPanel.hidden = true;
-  });
-  document.getElementById('api-key-clear-btn').addEventListener('click', function(){
-    try { localStorage.removeItem(API_KEY_STORAGE_KEY); } catch (e) {}
-    document.getElementById('api-key-input').value = '';
-    refreshApiKeyStatus();
-  });
 
   // Which archive PDFs to use as "similar past submissions" when
   // generating — picked via checkboxes on the Reference Documents page,
@@ -1780,7 +1747,7 @@
         ? ' Nothing was sent, including the archive document(s) you just confirmed — no API key is configured anywhere.'
         : '';
       if (result.reason === 'no-key') {
-        statusEl.textContent = 'Showing placeholder mockup text — add your Anthropic API key above (or set ANTHROPIC_API_KEY on the server) for a real draft.' + confirmNote;
+        statusEl.textContent = 'Showing placeholder mockup text — set ANTHROPIC_API_KEY on the server for a real draft.' + confirmNote;
       } else {
         statusEl.textContent = 'Showing placeholder mockup text — generation failed (' + (result.detail || result.reason) + ').' + confirmNote;
       }
