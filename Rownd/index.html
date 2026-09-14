@@ -881,6 +881,29 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   }
 
+  // PDF.js tells us where each line actually ends (item.hasEOL) — joining
+  // every text fragment with a single space instead of using that threw
+  // away all of the source PDF's real line structure, turning any
+  // extracted text into one unbroken block regardless of how it was
+  // actually laid out on the page. This rebuilds real line breaks from
+  // that signal, and treats 2+ blank lines in a row as one paragraph
+  // break instead of a wall of vertical whitespace.
+  function itemsToText(items){
+    var lines = [];
+    var current = '';
+    items.forEach(function(it){
+      current += it.str;
+      if (it.hasEOL) {
+        lines.push(current);
+        current = '';
+      } else if (it.str && !/\s$/.test(current)) {
+        current += ' ';
+      }
+    });
+    if (current) lines.push(current);
+    return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  }
+
   async function extractPdfText(file){
     var buf = await file.arrayBuffer();
     var pdf = await pdfjsLib.getDocument({data: buf}).promise;
@@ -888,7 +911,7 @@
     for (var i = 1; i <= pdf.numPages; i++){
       var page = await pdf.getPage(i);
       var content = await page.getTextContent();
-      pages.push(content.items.map(function(it){ return it.str; }).join(' ').trim());
+      pages.push(itemsToText(content.items));
     }
     return {numPages: pdf.numPages, pages: pages, text: pages.join('\n\n')};
   }

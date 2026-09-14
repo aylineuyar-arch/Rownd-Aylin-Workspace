@@ -2,6 +2,10 @@
 
 Every push to this repo is logged here, newest first, in plain language — what changed and why. This file is updated as part of every commit from now on, not just written after the fact.
 
+## 2026-09-13
+
+- **Fixed PDF text extraction destroying all line/paragraph structure, turning every extracted document into one unbroken block.** `extractPdfText` joined every text fragment on a page with a single space (`content.items.map(it => it.str).join(' ')`), discarding the line-break information PDF.js actually provides on each item (`item.hasEOL`). Rewrote it to rebuild real line breaks from that signal, collapsing 3+ consecutive blank lines into a single paragraph break instead of a wall of vertical whitespace. This fixes readability for all four Draft Checklist boxes that get auto-filled from a PDF (RFI details directly, Solicitation instructions / Rules and component list via the structured-section parser, which slices from this same extracted text). Verified with a real multi-line, multi-paragraph test PDF: the extracted "Rules and component list" text now shows three genuinely separate lines matching the source document exactly, instead of one run-on sentence.
+
 ## 2026-09-10
 
 - **Removed the "No folder" upload row entirely; restyled "Add a reference document" to stand out** — solid teal border/background instead of the dashed brown it had, bumped text size and darkened the heading, so it doesn't visually recede against the archive box's reddish tint now that it sits inside it. Uploading into a specific folder still works via each folder's own inline button; there's no dedicated "no folder" upload path through the app anymore (Finder still works for that, same as folder creation originally did before that got its own button too). Removed the now-orphaned JS wiring for the deleted button/input so nothing references missing elements. Verified: no console errors on load beyond the expected 403s for not-yet-logged-in file access, the "No folder" row's elements are gone from the DOM, "Add a reference document" carries the new teal styling, and per-folder upload still works end-to-end.
