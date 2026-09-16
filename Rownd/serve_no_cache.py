@@ -51,7 +51,11 @@ from getpass import getpass
 from urllib.parse import unquote
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
+# Third-party — `pip install cryptography` if this isn't already available.
+from cryptography.fernet import Fernet, InvalidToken
+
 HASH_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.archive_auth_hash')
+ENC_KEY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.archive_enc_key')
 ARCHIVE_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'private-rfi-archive'))
 # Enforced here, at every server start, rather than left to whatever the
 # directory happened to be created with (umask-dependent, and easy to
@@ -126,6 +130,30 @@ PASSWORD_HASH = load_or_set_password_hash()
 # Fresh every run, never persisted — restarting the server always requires
 # logging in again, which keeps a stale cookie from outliving the process.
 SESSION_SECRET = secrets.token_hex(32)
+
+
+def load_or_create_encryption_key():
+    # Deliberately NOT derived from the login password: this key has to be
+    # available to the process at startup with zero interaction, since the
+    # LaunchAgent restarts this server automatically after a crash with no
+    # terminal attached to type a password into. Tying it to the login
+    # password would mean either prompting on every automatic restart
+    # (breaking that) or keeping the plaintext password itself somewhere
+    # on disk — a new, worse exposure than anything here today. A
+    # separate random key in its own chmod-600 file matches how
+    # .archive_auth_hash and the session secret are already handled.
+    if os.path.exists(ENC_KEY_FILE):
+        with open(ENC_KEY_FILE, 'rb') as f:
+            return f.read()
+    key = Fernet.generate_key()
+    with open(ENC_KEY_FILE, 'wb') as f:
+        f.write(key)
+    os.chmod(ENC_KEY_FILE, 0o600)
+    return key
+
+
+ENCRYPTION_KEY = load_or_create_encryption_key()
+FERNET = Fernet(ENCRYPTION_KEY)
 
 # Login attempt lockout — this server is single-threaded (see `timeout`
 # on the handler below), so a plain module-level dict is safe with no
@@ -211,14 +239,52 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
         if self.command != 'HEAD':
             self.wfile.write(body)
 
+    def _archive_file_target(self, path):
+        # Returns the real on-disk path if this request targets an actual
+        # FILE under the archive (not a directory listing, not anything
+        # outside it) — the only case that might need decrypting.
+        try:
+            target = os.path.realpath(self.translate_path(path))
+            if os.path.commonpath([target, ARCHIVE_DIR]) != ARCHIVE_DIR:
+                return None
+            return target if os.path.isfile(target) else None
+        except Exception:
+            return None
+
+    def _serve_archive_file(self, target):
+        try:
+            with open(target, 'rb') as f:
+                raw = f.read()
+        except OSError:
+            return self.send_error(404, 'File not found')
+        try:
+            body = FERNET.decrypt(raw)
+        except InvalidToken:
+            # Not a Fernet token — a file already in the archive from
+            # before encryption existed. Served as-is rather than
+            # failing, so nothing already there becomes unreadable.
+            body = raw
+        self.send_response(200)
+        self.send_header('Content-Type', self.guess_type(target))
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        if self.command != 'HEAD':
+            self.wfile.write(body)
+
     def do_GET(self):
         if self._needs_auth() and not self._authorized():
             return self._deny()
+        target = self._archive_file_target(self.path)
+        if target:
+            return self._serve_archive_file(target)
         return super().do_GET()
 
     def do_HEAD(self):
         if self._needs_auth() and not self._authorized():
             return self._deny()
+        target = self._archive_file_target(self.path)
+        if target:
+            return self._serve_archive_file(target)
         return super().do_HEAD()
 
     def _read_bounded_bytes(self, max_len):
@@ -408,7 +474,7 @@ class NoCacheAuthHandler(SimpleHTTPRequestHandler):
         target_path = os.path.join(target_dir, file_name)
         try:
             with open(target_path, 'xb') as f:  # 'x' = fail if it already exists
-                f.write(data)
+                f.write(FERNET.encrypt(data))
         except FileExistsError:
             self._respond(409, 'A file with that name already exists there.')
         except (OSError, ValueError):

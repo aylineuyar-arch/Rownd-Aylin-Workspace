@@ -8,3 +8,9 @@ Rownd/private-rfi-archive/*
 # Hashed password for the archive server's HTTP Basic Auth — local to this
 # machine only, never committed.
 Rownd/.archive_auth_hash
+
+# Encryption-at-rest key for archive file contents — local to this
+# machine only, never committed. Losing this file makes every encrypted
+# file in the archive permanently unrecoverable, so back it up privately
+# if that matters to you; it is never backed up by this repo.
+Rownd/.archive_enc_key
