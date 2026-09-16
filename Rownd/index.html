@@ -1680,16 +1680,23 @@
     return parts.join('\n\n');
   }
 
-  // Splits generated text into paragraphs (blank-line separated) and
-  // renders a "--- Page N ---" line as an actual visual divider instead
-  // of literal dashes — moderate spacing between blocks, not a big gap.
+  // Splits generated text into paragraphs (blank-line separated), renders
+  // a "--- Page N ---" line as an actual visual divider, "#"/"##" heading
+  // lines as real headings, and ```fenced``` blocks as a real monospace
+  // block with whitespace preserved — line-based rather than a single
+  // blank-line split, since a fenced diagram's internal blank lines and
+  // alignment must survive untouched, not get collapsed like prose.
   function renderDraftText(container, text){
     container.innerHTML = '';
-    var blocks = text.split(/\n\s*\n/);
-    blocks.forEach(function(block){
-      var trimmed = block.trim();
-      if (!trimmed) return;
-      var pageMatch = trimmed.match(/^-{0,3}\s*page\s+(\d+)\s*-{0,3}$/i);
+    var lines = text.split('\n');
+    var paragraphLines = [];
+
+    function flushParagraph(){
+      if (!paragraphLines.length) return;
+      var block = paragraphLines.join('\n').trim();
+      paragraphLines = [];
+      if (!block) return;
+      var pageMatch = block.match(/^-{0,3}\s*page\s+(\d+)\s*-{0,3}$/i);
       if (pageMatch) {
         var divider = document.createElement('div');
         divider.className = 'flex items-center gap-2.5 my-3 text-slate-400';
@@ -1697,13 +1704,50 @@
           '<span class="font-mono text-sm uppercase tracking-wide whitespace-nowrap">Page ' + pageMatch[1] + '</span>' +
           '<span class="flex-1 border-t-2 border-slate-200"></span>';
         container.appendChild(divider);
-      } else {
-        var p = document.createElement('p');
-        p.className = 'mb-3.5';
-        p.textContent = trimmed;
-        container.appendChild(p);
+        return;
       }
-    });
+      var headingMatch = block.indexOf('\n') === -1 && block.match(/^(#{1,4})\s+(.+)$/);
+      if (headingMatch) {
+        var level = headingMatch[1].length;
+        var h = document.createElement(level <= 2 ? 'h3' : 'h4');
+        h.className = level <= 2
+          ? 'font-display font-semibold text-xl text-slate-900 mt-5 mb-2'
+          : 'font-display font-semibold text-lg text-slate-900 mt-4 mb-1.5';
+        h.textContent = headingMatch[2].trim();
+        container.appendChild(h);
+        return;
+      }
+      var p = document.createElement('p');
+      p.className = 'mb-3.5';
+      p.textContent = block;
+      container.appendChild(p);
+    }
+
+    var i = 0;
+    while (i < lines.length) {
+      if (/^\s*```/.test(lines[i])) {
+        flushParagraph();
+        i++;
+        var codeLines = [];
+        while (i < lines.length && !/^\s*```/.test(lines[i])) {
+          codeLines.push(lines[i]);
+          i++;
+        }
+        i++; // skip the closing fence
+        var pre = document.createElement('pre');
+        pre.className = 'bg-slate-50 border-2 border-slate-200 rounded-lg p-3 mb-3.5 text-sm font-mono text-slate-700 overflow-x-auto whitespace-pre';
+        pre.textContent = codeLines.join('\n');
+        container.appendChild(pre);
+        continue;
+      }
+      if (lines[i].trim() === '') {
+        flushParagraph();
+      } else {
+        paragraphLines.push(lines[i]);
+      }
+      i++;
+    }
+    flushParagraph();
   }
 
   // Hybrid: try this server's own key first (free for anyone using this
