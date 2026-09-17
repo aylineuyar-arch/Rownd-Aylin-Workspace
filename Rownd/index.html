@@ -1885,11 +1885,36 @@
     );
   }
 
+  // Guards against overlapping calls — clicking Generate Draft again
+  // (or clicking both the inline button and the fixed one) while a
+  // generation is already in flight let a second call's own "clear the
+  // text" step wipe out the first call's already-rendered result after
+  // the fact, leaving a "✓ generated" status with an empty draft body.
+  var generationInFlight = false;
+
   async function generateRealDraft(){
+    if (generationInFlight) return;
+    generationInFlight = true;
+    var triggerButtons = [
+      document.getElementById('generate-draft-btn'),
+      document.getElementById('generate-draft-fab'),
+      document.getElementById('regen-btn')
+    ];
+    triggerButtons.forEach(function(b){ b.disabled = true; b.classList.add('opacity-50', 'cursor-not-allowed'); });
+
     var statusEl = document.getElementById('generation-status');
     var fableEl = document.getElementById('draft-fable');
     var geminiEl = document.getElementById('draft-gemini');
 
+    try {
+      await generateRealDraftInner(statusEl, fableEl, geminiEl);
+    } finally {
+      generationInFlight = false;
+      triggerButtons.forEach(function(b){ b.disabled = false; b.classList.remove('opacity-50', 'cursor-not-allowed'); });
+    }
+  }
+
+  async function generateRealDraftInner(statusEl, fableEl, geminiEl){
     var checkedPdfNames = await getCheckedArchivePdfNames();
     var confirmedPdfNames = [];
     var archiveDeclined = false;
