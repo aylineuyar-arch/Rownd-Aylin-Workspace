@@ -282,7 +282,9 @@
 
           <div id="qa-summary-wrap" class="mb-4 pb-4 border-b-2 border-slate-200">
             <dt class="text-sm font-mono uppercase tracking-wide text-slate-500 mb-1.5">Summary</dt>
-            <dd id="qa-summary" class="text-lg text-slate-800 leading-relaxed"></dd>
+            <dd id="qa-summary" class="text-lg text-slate-800 leading-relaxed mb-3"></dd>
+            <dt class="text-sm font-mono uppercase tracking-wide text-slate-500 mb-1.5">Topics asked about</dt>
+            <ol id="qa-topics-list" class="list-decimal list-inside flex flex-col gap-1 text-lg text-slate-800"></ol>
           </div>
 
           <button type="button" id="qa-list-toggle" aria-expanded="false" aria-controls="qa-list-body" class="extract-collapse-toggle flex items-center gap-1.5 w-full text-left">
@@ -1396,22 +1398,26 @@
       breakdown.appendChild(span);
     });
 
-    // Plain-language summary — the category breakdown badges above
-    // already say WHAT TYPE each question is, so repeating "mostly
-    // about X and Y" here just restated them. This instead surfaces
-    // WHAT'S ACTUALLY BEING ASKED, using the real question text (not a
-    // synthesized abstraction), plus which answers read as binding —
-    // and only mentions that second part when there's something to flag,
-    // instead of a generic "none of the answers..." filler line.
-    var summary = pairs.length + (pairs.length === 1 ? ' question asked: ' : ' questions asked: ') +
-      categorized.map(function(c){ return '"' + truncate(c.pair.question, 70) + '"'; }).join('; ') + '.';
+    // A short overall line (not every quote crammed into one paragraph —
+    // that read as a wall of text once there were more than 2-3
+    // questions), then the real question text as an actual numbered
+    // list below it, one per line, so it's scannable rather than a
+    // semicolon-joined run-on sentence.
     var flagged = categorized.filter(function(c){ return isKeyGuidance(c.pair.answer); });
+    var summary = pairs.length + (pairs.length === 1 ? ' question was asked.' : ' questions were asked.');
     if (flagged.length) {
-      var snippets = flagged.map(function(c){ return '"' + truncate(c.pair.answer, 70) + '"'; });
-      summary += ' ' + flagged.length + (flagged.length === 1 ? ' answer reads as binding' : ' answers read as binding') +
-        ': ' + snippets.join('; ') + '.';
+      summary += ' ' + flagged.length + (flagged.length === 1 ? ' answer reads as binding language ("shall"/"must"/"required").' : ' answers read as binding language ("shall"/"must"/"required").');
     }
     document.getElementById('qa-summary').textContent = summary;
+
+    var topicsList = document.getElementById('qa-topics-list');
+    topicsList.innerHTML = '';
+    categorized.forEach(function(c){
+      var li = document.createElement('li');
+      li.textContent = truncate(c.pair.question, 90);
+      if (isKeyGuidance(c.pair.answer)) li.textContent += ' ⚠';
+      topicsList.appendChild(li);
+    });
 
     // every parsed question is shown — no subset is filtered out or
     // hidden behind a "key" section. Long answers are truncated with a
@@ -1517,11 +1523,12 @@
       document.getElementById('draft-panel').hidden = draft.draftPanelHidden;
 
       // Restore the checklist by replaying its saved text through the
-      // real 'input' listeners (checkmarks, auto-grow, the RFI-details
-      // structured-section parser, Q&A guidance) instead of trying to
-      // snapshot/restore the derived panels directly — those panels have
-      // their own per-element collapse-toggle listeners that a raw
-      // innerHTML clone would leave non-interactive.
+      // real 'input' listeners (checkmarks, auto-grow, Q&A guidance).
+      // This alone does NOT reliably rebuild the Extracted Topic Info
+      // panel below — that panel can come from a PDF upload's generic
+      // (non-structured) fallback, which the plain-text 'input' listener
+      // never triggers — so it's restored separately, directly, right
+      // after this.
       var checklistFields = [
         ['checklist-rfi-details', draft.checklistRfiDetails],
         ['checklist-instructions', draft.checklistInstructions],
@@ -1533,6 +1540,27 @@
         ta.value = pair[1] || '';
         ta.dispatchEvent(new Event('input', {bubbles: true}));
       });
+
+      // Restore the Extracted Topic Info panel exactly as it looked when
+      // saved (page count, tech areas, objective, phase details, etc.) —
+      // captured as real rendered HTML rather than re-derived, since it
+      // can come from a PDF's page count/metadata that isn't recoverable
+      // from the checklist text alone. Re-wire the collapse toggles
+      // afterward since innerHTML replacement drops their listeners.
+      document.getElementById('extracted-info-empty').hidden = true;
+      document.getElementById('extracted-info-loading').hidden = true;
+      document.getElementById('extracted-info-error').hidden = true;
+      document.getElementById('extracted-info-panel').hidden = true;
+      if (draft.extractedInfoState === 'panel') {
+        document.getElementById('extracted-info-panel').innerHTML = draft.extractedInfoHtml;
+        document.getElementById('extracted-info-panel').hidden = false;
+        wireExtractToggles(document.getElementById('extracted-info-panel'));
+      } else if (draft.extractedInfoState === 'error') {
+        document.getElementById('extract-error-message').textContent = draft.extractedInfoErrorText || '';
+        document.getElementById('extracted-info-error').hidden = false;
+      } else {
+        document.getElementById('extracted-info-empty').hidden = false;
+      }
 
       // Deliberately left expanded on resume, even when a generated
       // draft is also being restored — collapsing on a fresh Generate
@@ -1572,6 +1600,10 @@
       checklistInstructions: document.getElementById('checklist-instructions').value,
       checklistRules: document.getElementById('checklist-rules').value,
       checklistQa: document.getElementById('checklist-qa').value,
+      extractedInfoState: !document.getElementById('extracted-info-panel').hidden ? 'panel'
+        : !document.getElementById('extracted-info-error').hidden ? 'error' : 'empty',
+      extractedInfoHtml: document.getElementById('extracted-info-panel').innerHTML,
+      extractedInfoErrorText: document.getElementById('extract-error-message').textContent,
       savedAt: Date.now()
     };
 
@@ -1660,17 +1692,29 @@
     // confirmArchiveInclusion below). No auto-picking: these are
     // previously-sent RFIs/RFPs, sensitive by nature, so nothing from
     // the archive is ever included without you actively choosing it
-    // for this specific generation.
+    // for this specific generation. Pulled several pages deep (not a
+    // one-line snippet) since the point is to give the model actual
+    // writing to learn structure and phrasing from, not just confirm
+    // which topic a file is about.
     if (confirmedPdfNames && confirmedPdfNames.length) {
       try {
         var excerptBlocks = [];
         for (var i = 0; i < confirmedPdfNames.length; i++) {
           var href = 'private-rfi-archive/' + confirmedPdfNames[i].split('/').map(encodeURIComponent).join('/');
-          var excerpt = await extractArchiveExcerpt(href);
-          if (excerpt) excerptBlocks.push(confirmedPdfNames[i] + ':\n' + excerpt);
+          var excerpt = await extractArchiveExcerpt(href, {maxChars: 6000, maxPages: 8});
+          if (excerpt) excerptBlocks.push('=== ' + confirmedPdfNames[i] + ' ===\n' + excerpt);
         }
         if (excerptBlocks.length) {
-          parts.push('EXCERPTS FROM THE DOCUMENTS YOU SELECTED AND CONFIRMED FROM YOUR PRIVATE ARCHIVE (for tone/approach reference):\n' + excerptBlocks.join('\n\n'));
+          parts.push(
+            'PAST SUBMISSIONS — USE THESE AS YOUR WRITING TEMPLATE:\n' +
+            'The documents below are real technical volumes you (or your team) actually wrote and submitted before. ' +
+            'Your job is NOT to summarize them — it is to write the new Technical Approach section the way THESE are written: ' +
+            'match their section structure, sentence rhythm, level of technical specificity, and characteristic phrasing/verbiage. ' +
+            'Replace the old, topic-specific technical content with content that actually fits the NEW topic above — do not carry over ' +
+            'facts, numbers, or claims that belong to the old topic. Borrow the voice and format, not the substance. ' +
+            'The goal is a draft that gets roughly 80% of the way to submission-ready, that a human only needs to refine, not rewrite from scratch.\n\n' +
+            excerptBlocks.join('\n\n')
+          );
         }
       } catch (e) { /* archive not reachable — generate from what we have */ }
     }
@@ -1825,7 +1869,7 @@
     return window.confirm(
       'Send ' + pdfNames.length + ' document(s) from your Private RFI/RFP Archive to Anthropic’s API for draft generation?\n\n' +
       fileListText +
-      '\n\nThis sends their content over the network to a third party. Choose Cancel to generate from the topic/checklist/Q&A only, without these documents.'
+      '\n\nThis sends substantial real excerpts (several pages each, not just a snippet) over the network to a third party, so the draft can be written in the same style as these past submissions. Choose Cancel to generate from the topic/checklist/Q&A only, without these documents.'
     );
   }
 
@@ -1944,14 +1988,29 @@
   // (not logged in) just shows its name with no excerpt, since the
   // listing itself is public but the content isn't — same rule as
   // everywhere else in the archive.
-  async function extractArchiveExcerpt(fileUrl){
+  // maxChars/maxPages default to a short single-page preview (used in the
+  // archive/referenced-documents lists, where the point is just "is this
+  // the right file?"). buildGenerationPrompt asks for a much larger
+  // excerpt — enough real text that the model has actual sentences,
+  // section structure, and phrasing to draw from, not just a fragment
+  // long enough to confirm the topic.
+  async function extractArchiveExcerpt(fileUrl, opts){
+    var maxChars = (opts && opts.maxChars) || 220;
+    var maxPages = (opts && opts.maxPages) || 1;
     try {
       var pdf = await pdfjsLib.getDocument({url: fileUrl}).promise;
-      var page = await pdf.getPage(1);
-      var content = await page.getTextContent();
-      var text = itemsToText(content.items);
+      var pageCount = Math.min(maxPages, pdf.numPages);
+      var pageTexts = [];
+      for (var p = 1; p <= pageCount; p++) {
+        var page = await pdf.getPage(p);
+        var content = await page.getTextContent();
+        var pageText = itemsToText(content.items);
+        if (pageText) pageTexts.push(pageText);
+        if (pageTexts.join('\n\n').length >= maxChars) break;
+      }
+      var text = pageTexts.join('\n\n');
       if (!text) return null;
-      return text.length > 220 ? text.slice(0, 220).trim() + '…' : text;
+      return text.length > maxChars ? text.slice(0, maxChars).trim() + '…' : text;
     } catch (e) {
       return null;
     }
@@ -2012,15 +2071,22 @@
     }
   }
 
-  // collapsible Objective / Description / Phase I / Phase II blocks in the sidebar
-  document.querySelectorAll('.extract-collapse-toggle').forEach(function(toggle){
-    toggle.addEventListener('click', function(){
-      var expanded = toggle.getAttribute('aria-expanded') === 'true';
-      toggle.setAttribute('aria-expanded', String(!expanded));
-      document.getElementById(toggle.getAttribute('aria-controls')).hidden = expanded;
-      toggle.querySelector('.chevron').style.transform = expanded ? '' : 'rotate(180deg)';
+  // Collapsible Objective / Description / Phase I / Phase II blocks in the
+  // sidebar — a named function, not a one-time forEach, because restoring
+  // a saved draft's Extracted Topic Info panel via innerHTML (see
+  // getSavedDrafts/renderDraftRow) replaces these toggle buttons with new
+  // DOM nodes that need this wiring run again.
+  function wireExtractToggles(root){
+    (root || document).querySelectorAll('.extract-collapse-toggle').forEach(function(toggle){
+      toggle.addEventListener('click', function(){
+        var expanded = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', String(!expanded));
+        document.getElementById(toggle.getAttribute('aria-controls')).hidden = expanded;
+        toggle.querySelector('.chevron').style.transform = expanded ? '' : 'rotate(180deg)';
+      });
     });
-  });
+  }
+  wireExtractToggles();
 
   // outcome tagging (Historic Submissions)
   document.querySelectorAll('.tag-btn').forEach(function(btn){
